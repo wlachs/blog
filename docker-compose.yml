@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  core:
+    container_name: "blog_core"
+    env_file:
+      - ./build/env/core.env
+      - ./build/env/shared.env
+    build: ./
+    environment:
+      - PORT=8080
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    restart: unless-stopped
+  db:
+    container_name: blog_db
+    env_file:
+      - ./build/env/db.env
+      - ./build/env/shared.env
+    image: mysql:8
+    ports:
+      - 3306:3306
+    restart: unless-stopped
