@@ -17,6 +17,15 @@ type User struct {
 	UpdatedAt    time.Time
 }
 
+func GetUsers() ([]User, error) {
+	var u []User
+	if result := database.Agent.Preload("Posts").Find(&u); result.Error != nil {
+		return []User{}, result.Error
+	}
+
+	return u, nil
+}
+
 func GetUser(n string) (User, error) {
 	u := User{
 		UserName: n,

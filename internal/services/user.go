@@ -12,7 +12,23 @@ func mapUser(u models.User) types.User {
 	return types.User{
 		UserName:     u.UserName,
 		PasswordHash: u.PasswordHash,
+		Posts:        mapPostHandles(u.Posts),
 	}
+}
+
+func mapUsers(u []models.User) []types.User {
+	users := []types.User{}
+
+	for _, user := range u {
+		users = append(users, mapUser(user))
+	}
+
+	return users
+}
+
+func GetUsers() ([]types.User, error) {
+	u, err := models.GetUsers()
+	return mapUsers(u), err
 }
 
 func GetUser(userName string) (types.User, error) {

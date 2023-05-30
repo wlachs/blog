@@ -30,3 +30,30 @@ func registerHandler(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 }
+
+func getUsersMiddleware(c *gin.Context) {
+	users, err := services.GetUsers()
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, users)
+}
+
+func getUserMiddleware(c *gin.Context) {
+	userName, found := c.Params.Get("userName")
+
+	if !found {
+		c.AbortWithStatusJSON(http.StatusBadRequest, "No userName provided!")
+		return
+	}
+
+	user, err := services.GetUser(userName)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, user)
+}

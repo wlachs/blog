@@ -26,6 +26,16 @@ func mapPosts(p []models.Post) []types.Post {
 	return posts
 }
 
+func mapPostHandles(p []models.Post) []string {
+	handles := []string{}
+
+	for _, post := range p {
+		handles = append(handles, post.URLHandle)
+	}
+
+	return handles
+}
+
 func GetPosts() ([]types.Post, error) {
 	p, err := models.GetPosts()
 	return mapPosts(p), err

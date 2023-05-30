@@ -11,6 +11,7 @@ type UserRegisterInput struct {
 }
 
 type User struct {
-	UserName     string `json:"userName"`
-	PasswordHash string `json:"-"`
+	UserName     string   `json:"userName"`
+	PasswordHash string   `json:"-"`
+	Posts        []string `json:"posts"`
 }
