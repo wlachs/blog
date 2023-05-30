@@ -9,7 +9,7 @@ import (
 )
 
 func loginMiddleware(c *gin.Context) {
-	var u types.UserInput
+	var u types.UserLoginInput
 
 	if err := c.BindJSON(&u); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)

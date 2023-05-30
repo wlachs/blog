@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func AuthenticateUser(u types.UserInput) (string, error) {
+func AuthenticateUser(u types.UserLoginInput) (string, error) {
 	if !CheckUserPassword(u) {
 		return "", fmt.Errorf("incorrect username or password")
 	}
@@ -20,7 +20,7 @@ func VerifyAuthenticationToken(t string) bool {
 	return err == nil
 }
 
-func CheckUserPassword(u types.UserInput) bool {
+func CheckUserPassword(u types.UserLoginInput) bool {
 	user, _ := GetUser(u.UserName)
 	return CompareStringWithHash(u.Password, user.PasswordHash)
 }

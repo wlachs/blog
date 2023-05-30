@@ -1,8 +1,13 @@
 package types
 
-type UserInput struct {
+type UserLoginInput struct {
 	UserName string `json:"userName"`
 	Password string `json:"password"`
+}
+
+type UserRegisterInput struct {
+	UserLoginInput
+	RegistrationSecret string `json:"registrationSecret"`
 }
 
 type User struct {
