@@ -12,6 +12,7 @@ type User struct {
 	ID           uint   `gorm:"primaryKey;autoIncrement"`
 	UserName     string `gorm:"unique;not null"`
 	PasswordHash string `gorm:"not null"`
+	Posts        []Post `gorm:"foreignKey:ID"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -21,7 +22,7 @@ func GetUser(n string) (User, error) {
 		UserName: n,
 	}
 
-	result := database.Agent.Take(&u)
+	result := database.Agent.Preload("Posts").Take(&u)
 
 	if result.Error != nil {
 		return User{}, result.Error
