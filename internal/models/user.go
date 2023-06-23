@@ -31,7 +31,7 @@ func GetUser(n string) (User, error) {
 		UserName: n,
 	}
 
-	result := database.Agent.Preload("Posts").Take(&u)
+	result := database.Agent.Preload("Posts").Where(&u).Take(&u)
 
 	if result.Error != nil {
 		return User{}, result.Error
