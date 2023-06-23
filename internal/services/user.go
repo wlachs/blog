@@ -17,7 +17,7 @@ func mapUser(u models.User) types.User {
 }
 
 func mapUsers(u []models.User) []types.User {
-	users := []types.User{}
+	var users []types.User
 
 	for _, user := range u {
 		users = append(users, mapUser(user))
@@ -37,14 +37,12 @@ func GetUser(userName string) (types.User, error) {
 }
 
 func RegisterUser(u types.UserRegisterInput) (types.User, error) {
-	REGISTRATION_SECRET := os.Getenv("REGISTRATION_SECRET")
-
-	if REGISTRATION_SECRET != u.RegistrationSecret {
+	RegistrationSecret := os.Getenv("REGISTRATION_SECRET")
+	if RegistrationSecret != u.RegistrationSecret {
 		return types.User{}, errors.IncorrectSecretError{}
 	}
 
 	hash, err := HashString(u.Password)
-
 	if err != nil {
 		return types.User{}, err
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var JWT_SIGNING_KEY = []byte(os.Getenv("JWT_SIGNING_KEY"))
+var JwtSigningKey = []byte(os.Getenv("JWT_SIGNING_KEY"))
 
 func GenerateJWT(userName string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -18,7 +18,7 @@ func GenerateJWT(userName string) (string, error) {
 	claims["authorized"] = true
 	claims["user"] = userName
 
-	return token.SignedString(JWT_SIGNING_KEY)
+	return token.SignedString(JwtSigningKey)
 }
 
 func ParseJWT(t string) (string, error) {
@@ -29,7 +29,7 @@ func ParseJWT(t string) (string, error) {
 		}
 
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return JWT_SIGNING_KEY, nil
+		return JwtSigningKey, nil
 	})
 
 	if err != nil {

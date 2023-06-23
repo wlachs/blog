@@ -12,7 +12,7 @@ import (
 func getPostsMiddleware(c *gin.Context) {
 	posts, err := services.GetPosts()
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -29,7 +29,7 @@ func getPostMiddleware(c *gin.Context) {
 
 	post, err := services.GetPost(id)
 	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
+		_ = c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func addPostMiddleware(c *gin.Context) {
 	var post types.Post
 
 	if err := c.BindJSON(&post); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -51,9 +51,9 @@ func addPostMiddleware(c *gin.Context) {
 		c.IndentedJSON(http.StatusCreated, post)
 
 	case errors.DuplicateElementError:
-		c.AbortWithError(http.StatusConflict, err)
+		_ = c.AbortWithError(http.StatusConflict, err)
 
 	default:
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 	}
 }

@@ -12,13 +12,13 @@ func loginMiddleware(c *gin.Context) {
 	var u types.UserLoginInput
 
 	if err := c.BindJSON(&u); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 	}
 
 	token, err := services.AuthenticateUser(u)
 
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		_ = c.AbortWithError(http.StatusUnauthorized, err)
 		return
 	}
 

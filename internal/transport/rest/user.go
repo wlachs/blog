@@ -13,7 +13,7 @@ func registerHandler(c *gin.Context) {
 	var u types.UserRegisterInput
 
 	if err := c.BindJSON(&u); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -24,17 +24,17 @@ func registerHandler(c *gin.Context) {
 		c.IndentedJSON(http.StatusCreated, newUser)
 
 	case errors.IncorrectSecretError:
-		c.AbortWithError(http.StatusUnauthorized, err)
+		_ = c.AbortWithError(http.StatusUnauthorized, err)
 
 	default:
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 	}
 }
 
 func getUsersMiddleware(c *gin.Context) {
 	users, err := services.GetUsers()
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -51,7 +51,7 @@ func getUserMiddleware(c *gin.Context) {
 
 	user, err := services.GetUser(userName)
 	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
+		_ = c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 

@@ -17,7 +17,7 @@ func mapPost(p models.Post) types.Post {
 }
 
 func mapPosts(p []models.Post) []types.Post {
-	posts := []types.Post{}
+	var posts []types.Post
 
 	for _, post := range p {
 		posts = append(posts, mapPost(post))
@@ -27,7 +27,7 @@ func mapPosts(p []models.Post) []types.Post {
 }
 
 func mapPostHandles(p []models.Post) []string {
-	handles := []string{}
+	var handles []string
 
 	for _, post := range p {
 		handles = append(handles, post.URLHandle)
