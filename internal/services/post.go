@@ -15,12 +15,21 @@ func mapPost(p models.Post) types.Post {
 		CreationTime: p.CreatedAt,
 	}
 }
+func mapPostMetadata(p models.Post) types.Post {
+	return types.Post{
+		URLHandle:    p.URLHandle,
+		Title:        p.Title,
+		Author:       p.Author.UserName,
+		Summary:      p.Summary,
+		CreationTime: p.CreatedAt,
+	}
+}
 
 func mapPosts(p []models.Post) []types.Post {
 	var posts []types.Post
 
 	for _, post := range p {
-		posts = append(posts, mapPost(post))
+		posts = append(posts, mapPostMetadata(post))
 	}
 
 	return posts
