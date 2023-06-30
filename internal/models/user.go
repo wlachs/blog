@@ -12,7 +12,7 @@ type User struct {
 	ID           uint   `gorm:"primaryKey;autoIncrement"`
 	UserName     string `gorm:"unique;not null"`
 	PasswordHash string `gorm:"not null"`
-	Posts        []Post `gorm:"foreignKey:ID"`
+	Posts        []Post `gorm:"foreignKey:AuthorID"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
