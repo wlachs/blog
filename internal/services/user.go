@@ -53,6 +53,7 @@ func RegisterFirstUser() error {
 		Password: defaultPassword,
 	}
 
+	fmt.Println("initializing first user")
 	_, err := RegisterUser(u)
 	return err
 }
