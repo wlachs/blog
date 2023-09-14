@@ -2,10 +2,10 @@ package app
 
 import (
 	"fmt"
+	"github.com/wlchs/blog/internal/services"
 	"os"
 
 	"github.com/wlchs/blog/internal/database"
-	"github.com/wlchs/blog/internal/models"
 	"github.com/wlchs/blog/internal/transport/rest"
 )
 
@@ -19,8 +19,8 @@ func Run() {
 		os.Exit(1)
 	}
 
-	if migrationErr := models.InitModels(); migrationErr != nil {
-		fmt.Println("model migration error:", migrationErr)
+	if err := services.RunInitActions(); err != nil {
+		fmt.Println("initialization error:", err)
 		os.Exit(1)
 	}
 

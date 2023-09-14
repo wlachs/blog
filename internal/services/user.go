@@ -1,11 +1,10 @@
 package services
 
 import (
-	"os"
-
-	"github.com/wlchs/blog/internal/errors"
+	"fmt"
 	"github.com/wlchs/blog/internal/models"
 	"github.com/wlchs/blog/internal/transport/types"
+	"os"
 )
 
 func mapUser(u models.User) types.User {
@@ -36,12 +35,30 @@ func GetUser(userName string) (types.User, error) {
 	return mapUser(u), err
 }
 
-func RegisterUser(u types.UserRegisterInput) (types.User, error) {
-	RegistrationSecret := os.Getenv("REGISTRATION_SECRET")
-	if RegistrationSecret != u.RegistrationSecret {
-		return types.User{}, errors.IncorrectSecretError{}
+// RegisterFirstUser creates the main user if it doesn't exist yet. The default username and password are read from environment variables.
+func RegisterFirstUser() error {
+	defaultUser := os.Getenv("DEFAULT_USER")
+	defaultPassword := os.Getenv("DEFAULT_PASSWORD")
+
+	if defaultUser == "" || defaultPassword == "" {
+		return fmt.Errorf("default username or password missing")
 	}
 
+	if _, userNotFound := GetUser(defaultUser); userNotFound == nil {
+		return nil
+	}
+
+	u := types.UserLoginInput{
+		UserName: defaultUser,
+		Password: defaultPassword,
+	}
+
+	fmt.Println("initializing first user")
+	_, err := RegisterUser(u)
+	return err
+}
+
+func RegisterUser(u types.UserLoginInput) (types.User, error) {
 	hash, err := HashString(u.Password)
 	if err != nil {
 		return types.User{}, err
