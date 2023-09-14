@@ -1,9 +1,6 @@
 package services
 
 import (
-	"os"
-
-	"github.com/wlchs/blog/internal/errors"
 	"github.com/wlchs/blog/internal/models"
 	"github.com/wlchs/blog/internal/transport/types"
 )
@@ -37,11 +34,6 @@ func GetUser(userName string) (types.User, error) {
 }
 
 func RegisterUser(u types.UserRegisterInput) (types.User, error) {
-	RegistrationSecret := os.Getenv("REGISTRATION_SECRET")
-	if RegistrationSecret != u.RegistrationSecret {
-		return types.User{}, errors.IncorrectSecretError{}
-	}
-
 	hash, err := HashString(u.Password)
 	if err != nil {
 		return types.User{}, err
