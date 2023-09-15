@@ -44,6 +44,8 @@ func addPostMiddleware(c *gin.Context) {
 		return
 	}
 
+	// Set author from context
+	post.Author = c.GetString("user")
 	post, err := services.AddPost(post)
 
 	switch err.(type) {
