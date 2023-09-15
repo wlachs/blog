@@ -15,11 +15,6 @@ func AuthenticateUser(u types.UserLoginInput) (string, error) {
 	return GenerateJWT(u.UserName)
 }
 
-func VerifyAuthenticationToken(t string) bool {
-	_, err := ParseJWT(t)
-	return err == nil
-}
-
 func CheckUserPassword(u types.UserLoginInput) bool {
 	user, _ := GetUser(u.UserName)
 	return CompareStringWithHash(u.Password, user.PasswordHash)

@@ -31,7 +31,8 @@ func jwtAuthMiddleware(c *gin.Context) {
 
 	if token == "" {
 		c.AbortWithStatus(401)
-	} else if services.VerifyAuthenticationToken(token) {
+	} else if u, err := services.ParseJWT(token); err == nil {
+		c.Set("user", u)
 		c.Next()
 	} else {
 		c.AbortWithStatus(401)
