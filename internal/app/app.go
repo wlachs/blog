@@ -1,8 +1,8 @@
 package app
 
 import (
-	"fmt"
 	"github.com/wlchs/blog/internal/services"
+	"github.com/wlchs/blog/internal/utils"
 	"os"
 
 	"github.com/wlchs/blog/internal/database"
@@ -15,17 +15,17 @@ import (
 // - Bind application routes
 func Run() {
 	if dbErr := database.InitDB(); dbErr != nil {
-		fmt.Println("db initialization error:", dbErr)
+		utils.LOG.Errorf("db initialization error: %s", dbErr)
 		os.Exit(1)
 	}
 
 	if err := services.RunInitActions(); err != nil {
-		fmt.Println("initialization error:", err)
+		utils.LOG.Errorf("initialization error: %s", err)
 		os.Exit(1)
 	}
 
 	if routeErr := rest.InitRoutes(); routeErr != nil {
-		fmt.Println("routing error:", routeErr)
+		utils.LOG.Errorf("routing error: %s", routeErr)
 		os.Exit(1)
 	}
 }
