@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/wlchs/blog/internal/models"
 	"github.com/wlchs/blog/internal/transport/types"
+	"github.com/wlchs/blog/internal/utils"
 	"os"
 )
 
@@ -53,7 +54,7 @@ func RegisterFirstUser() error {
 		Password: defaultPassword,
 	}
 
-	fmt.Println("initializing first user")
+	utils.LOG.Infof("initializing first user with name %s", defaultUser)
 	_, err := RegisterUser(u)
 	return err
 }
