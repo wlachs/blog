@@ -5,6 +5,11 @@ type UserLoginInput struct {
 	Password string `json:"password"`
 }
 
+type UserPasswordChangeInput struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type User struct {
 	UserName     string   `json:"userName"`
 	PasswordHash string   `json:"-"`

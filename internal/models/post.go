@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/wlchs/blog/internal/database"
-	"github.com/wlchs/blog/internal/errors"
+	"github.com/wlchs/blog/internal/errortypes"
 	"github.com/wlchs/blog/internal/transport/types"
 )
 
@@ -67,7 +67,7 @@ func AddPost(p types.Post) (Post, error) {
 		return newPost, nil
 
 	} else if strings.Contains(result.Error.Error(), "1062") {
-		return Post{}, errors.DuplicateElementError{Key: p.URLHandle}
+		return Post{}, errortypes.DuplicateElementError{Key: p.URLHandle}
 	}
 
 	return Post{}, fmt.Errorf("error creating post with URL handle \"%s\"", newPost.URLHandle)

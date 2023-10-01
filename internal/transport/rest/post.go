@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/errors"
+	"github.com/wlchs/blog/internal/errortypes"
 	"github.com/wlchs/blog/internal/services"
 	"github.com/wlchs/blog/internal/transport/types"
 )
@@ -52,7 +52,7 @@ func addPostMiddleware(c *gin.Context) {
 	case nil:
 		c.IndentedJSON(http.StatusCreated, post)
 
-	case errors.DuplicateElementError:
+	case errortypes.DuplicateElementError:
 		_ = c.AbortWithError(http.StatusConflict, err)
 
 	default:
