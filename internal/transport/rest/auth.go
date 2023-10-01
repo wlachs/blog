@@ -30,11 +30,11 @@ func jwtAuthMiddleware(c *gin.Context) {
 	token := c.Request.Header.Get("X-Auth-Token")
 
 	if token == "" {
-		c.AbortWithStatus(401)
+		c.AbortWithStatus(http.StatusUnauthorized)
 	} else if u, err := services.ParseJWT(token); err == nil {
 		c.Set("user", u)
 		c.Next()
 	} else {
-		c.AbortWithStatus(401)
+		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }

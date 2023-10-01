@@ -18,6 +18,7 @@ func InitRoutes() error {
 	router.GET("/users", getUsersMiddleware)
 	router.GET("/users/:userName", getUserMiddleware)
 	router.POST("/login", loginMiddleware)
+	router.POST("/change_password", jwtAuthMiddleware, passwordChangeMiddleware)
 
 	PORT := os.Getenv("PORT")
 	return router.Run(":" + PORT)

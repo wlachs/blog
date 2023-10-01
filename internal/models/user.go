@@ -56,3 +56,15 @@ func AddUser(u types.User) (User, error) {
 
 	return newUser, nil
 }
+
+// UpdateUser updates an existing user with the provided data.
+func UpdateUser(u types.User) (User, error) {
+	user := User{UserName: u.UserName}
+	pw := User{PasswordHash: u.PasswordHash}
+
+	if result := database.Agent.Where(&user).Updates(&pw); result.Error != nil {
+		return User{}, result.Error
+	}
+
+	return user, nil
+}
