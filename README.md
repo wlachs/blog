@@ -1,6 +1,8 @@
 # wlchs/blog
 Lightweight blog engine implemented in Go
 
+---
+
 ## How to run
 Follow the guide to deploy your very own blog engine!
 
