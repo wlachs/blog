@@ -5,7 +5,7 @@ type UserLoginInput struct {
 	Password string `json:"password"`
 }
 
-type UserPasswordChangeInput struct {
+type UserUpdateInput struct {
 	OldPassword string `json:"oldPassword"`
 	NewPassword string `json:"newPassword"`
 }

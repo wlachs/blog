@@ -76,20 +76,17 @@ func RegisterUser(u types.UserLoginInput) (types.User, error) {
 	return mapUser(addedUser), err
 }
 
-// ChangeUserPassword receives two user input objects, one with the user's current password, and one with the new one.
-// If the old password matches the currently set one, the new password is hashed and set instead.
-func ChangeUserPassword(oldUser types.UserLoginInput, newUser types.UserLoginInput) (types.User, error) {
+// UpdateUser receives two user input objects, one with the user's current password, and one with the new attributes.
+// If the old password matches the currently set one, the new fields are set.
+func UpdateUser(oldUser types.UserLoginInput, newUser types.User) (types.User, error) {
 	if ok := CheckUserPassword(oldUser); !ok {
-		return types.User{}, errortypes.ErrorWithStatus{Status: 401, Err: fmt.Errorf("incorrect username or password")}
+		return types.User{}, errortypes.ErrorWithStatus{Status: http.StatusUnauthorized, Err: fmt.Errorf("incorrect username or password")}
 	}
 
-	hash, err := HashString(newUser.Password)
+	updatedUser, err := models.UpdateUser(newUser)
 	if err != nil {
-		return types.User{}, errortypes.ErrorWithStatus{Status: http.StatusUnauthorized, Err: err}
+		return types.User{}, err
 	}
-
-	user := types.User{UserName: oldUser.UserName, PasswordHash: hash}
-	updatedUser, err := models.UpdateUser(user)
 
 	return mapUser(updatedUser), nil
 }
