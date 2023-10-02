@@ -37,26 +37,32 @@ func getUserMiddleware(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, user)
 }
 
-func passwordChangeMiddleware(c *gin.Context) {
-	var p types.UserPasswordChangeInput
+func updateUserMiddleware(c *gin.Context) {
+	var p types.UserUpdateInput
 	if err := c.BindJSON(&p); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	var oldUser types.UserLoginInput
-	oldUser.UserName = c.GetString("user")
+	oldUser.UserName, _ = c.Params.Get("userName")
 	oldUser.Password = p.OldPassword
 
-	var newUser types.UserLoginInput
-	newUser.UserName = oldUser.UserName
-	newUser.Password = p.NewPassword
-
-	user, err := services.ChangeUserPassword(oldUser, newUser)
+	hash, err := services.HashString(p.NewPassword)
 	if err != nil {
-		var errorWithStatus errortypes.ErrorWithStatus
-		if errors.As(err, &errorWithStatus) {
-			c.AbortWithStatusJSON(errorWithStatus.Status, errorWithStatus.Error())
+		c.AbortWithStatusJSON(http.StatusUnauthorized, err)
+		return
+	}
+
+	var newUser types.User
+	newUser.UserName = oldUser.UserName
+	newUser.PasswordHash = hash
+
+	user, err := services.UpdateUser(oldUser, newUser)
+	if err != nil {
+		var incorrectUsernameOrPasswordError errortypes.IncorrectUsernameOrPasswordError
+		if errors.As(err, &incorrectUsernameOrPasswordError) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, incorrectUsernameOrPasswordError.Error())
 			return
 		} else {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
