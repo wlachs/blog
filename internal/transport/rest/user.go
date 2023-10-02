@@ -60,9 +60,9 @@ func updateUserMiddleware(c *gin.Context) {
 
 	user, err := services.UpdateUser(oldUser, newUser)
 	if err != nil {
-		var errorWithStatus errortypes.ErrorWithStatus
-		if errors.As(err, &errorWithStatus) {
-			c.AbortWithStatusJSON(errorWithStatus.Status, errorWithStatus.Error())
+		var incorrectUsernameOrPasswordError errortypes.IncorrectUsernameOrPasswordError
+		if errors.As(err, &incorrectUsernameOrPasswordError) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, incorrectUsernameOrPasswordError.Error())
 			return
 		} else {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)

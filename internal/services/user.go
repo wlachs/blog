@@ -6,7 +6,6 @@ import (
 	"github.com/wlchs/blog/internal/models"
 	"github.com/wlchs/blog/internal/transport/types"
 	"github.com/wlchs/blog/internal/utils"
-	"net/http"
 	"os"
 )
 
@@ -80,7 +79,7 @@ func RegisterUser(u types.UserLoginInput) (types.User, error) {
 // If the old password matches the currently set one, the new fields are set.
 func UpdateUser(oldUser types.UserLoginInput, newUser types.User) (types.User, error) {
 	if ok := CheckUserPassword(oldUser); !ok {
-		return types.User{}, errortypes.ErrorWithStatus{Status: http.StatusUnauthorized, Err: fmt.Errorf("incorrect username or password")}
+		return types.User{}, errortypes.IncorrectUsernameOrPasswordError{}
 	}
 
 	updatedUser, err := models.UpdateUser(newUser)
