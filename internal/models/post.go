@@ -24,7 +24,7 @@ type Post struct {
 
 func GetPosts() ([]Post, error) {
 	var p []Post
-	if result := database.Agent.Preload("Author").Find(&p); result.Error != nil {
+	if result := database.Agent.Preload("Author").Order("created_at DESC").Find(&p); result.Error != nil {
 		return []Post{}, result.Error
 	}
 
