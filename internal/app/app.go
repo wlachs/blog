@@ -1,31 +1,24 @@
 package app
 
 import (
+	"github.com/wlchs/blog/internal/container"
+	"github.com/wlchs/blog/internal/logger"
+	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/services"
-	"github.com/wlchs/blog/internal/utils"
-	"os"
-
-	"github.com/wlchs/blog/internal/database"
 	"github.com/wlchs/blog/internal/transport/rest"
 )
 
 // Run initializes the application:
+// - Create logger
 // - Establish DB connection
+// - Define configuration container
 // - Create potentially non-existing DB tables
 // - Bind application routes
 func Run() {
-	if dbErr := database.InitDB(); dbErr != nil {
-		utils.LOG.Errorf("db initialization error: %s", dbErr)
-		os.Exit(1)
-	}
+	log := logger.CreateLogger()
+	rep := repository.CreateRepository()
+	cont := container.CreateContainer(log, rep)
 
-	if err := services.RunInitActions(); err != nil {
-		utils.LOG.Errorf("initialization error: %s", err)
-		os.Exit(1)
-	}
-
-	if routeErr := rest.InitRoutes(); routeErr != nil {
-		utils.LOG.Errorf("routing error: %s", routeErr)
-		os.Exit(1)
-	}
+	services.RunInitActions(cont)
+	rest.InitRoutes(cont)
 }

@@ -23,6 +23,17 @@ type repository struct {
 	db *gorm.DB
 }
 
+// CreateRepository established a DB connection and returns the repository.
+// If, for some reason, the DB connection fails, the error is logged and the application terminates.
+func CreateRepository() Repository {
+	db, err := connectToMySQL()
+	if err != nil {
+		fmt.Printf("failed to establish DB connection: %s", err)
+	}
+
+	return &repository{db: db}
+}
+
 // Select specify fields to be retrieved from the database
 func (rep *repository) Select(query interface{}, args ...interface{}) *gorm.DB {
 	return rep.db.Select(query, args...)
@@ -67,15 +78,4 @@ func (rep *repository) Close() error {
 // AutoMigrate updates the DB schema to match the current state
 func (rep *repository) AutoMigrate(value interface{}) error {
 	return rep.db.AutoMigrate(value)
-}
-
-// CreateDatabase established a DB connection and returns the repository.
-// If, for some reason, the DB connection fails, the error is logged and the application terminates.
-func CreateDatabase() Repository {
-	db, err := connectToMySQL()
-	if err != nil {
-		fmt.Printf("failed to establish DB connection: %s", err)
-	}
-
-	return &repository{db: db}
 }
