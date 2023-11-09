@@ -19,6 +19,6 @@ func Run() {
 	rep := repository.CreateRepository()
 	cont := container.CreateContainer(log, rep)
 
-	services.RunInitActions(cont)
-	rest.InitRoutes(cont)
+	services.InitActions(cont)
+	rest.CreateRoutes(cont)
 }

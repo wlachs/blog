@@ -1,12 +1,15 @@
 package rest
 
 import (
+	"github.com/wlchs/blog/internal/container"
 	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
-func InitRoutes() error {
+// CreateRoutes initializes and serves the REST API
+func CreateRoutes(cont container.Container) {
+	log := cont.GetLogger()
 	router := gin.Default()
 
 	// Posts
@@ -20,6 +23,11 @@ func InitRoutes() error {
 	router.PUT("/users/:userName", updateUserMiddleware)
 	router.POST("/login", loginMiddleware)
 
-	PORT := os.Getenv("PORT")
-	return router.Run(":" + PORT)
+	port := os.Getenv("PORT")
+	err := router.Run(":" + port)
+
+	if err != nil {
+		log.Error("error encountered in router: %s", err)
+		os.Exit(1)
+	}
 }

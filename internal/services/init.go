@@ -1,23 +1,25 @@
 package services
 
 import (
+	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/models"
-	"github.com/wlchs/blog/internal/utils"
+	"os"
 )
 
-// RunInitActions makes sure that the application is initialized for first time use.
-func RunInitActions() error {
-	// Initialize logging
-	if err := utils.InitLogger(); err != nil {
-		return err
-	}
+// InitActions makes sure that the application is initialized for first time use.
+func InitActions(cont container.Container) {
+	log := cont.GetLogger()
+
 	// Initialize DB models
 	if err := models.InitModels(); err != nil {
-		return err
+		log.Error("DB model initialization failed: %s", err)
+		os.Exit(1)
 	}
+
 	// Create user if it doesn't exist yet
 	if err := RegisterFirstUser(); err != nil {
-		return err
+		log.Error("first user registration failed: %s", err)
 	}
-	return nil
+
+	log.Info("init actions done")
 }
