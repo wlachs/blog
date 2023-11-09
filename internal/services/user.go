@@ -18,7 +18,7 @@ func mapUser(u models.User) types.User {
 }
 
 func mapUsers(u []models.User) []types.User {
-	var users []types.User
+	users := make([]types.User, 0, len(u))
 
 	for _, user := range u {
 		users = append(users, mapUser(user))

@@ -62,10 +62,8 @@ func AddPost(p types.Post) (Post, error) {
 		Summary:   p.Summary,
 		Body:      p.Body,
 	}
-
 	if result := database.Agent.Create(&newPost); result.Error == nil {
 		return newPost, nil
-
 	} else if strings.Contains(result.Error.Error(), "1062") {
 		return Post{}, errortypes.DuplicateElementError{Key: p.URLHandle}
 	}

@@ -26,7 +26,7 @@ func mapPostMetadata(p models.Post) types.Post {
 }
 
 func mapPosts(p []models.Post) []types.Post {
-	var posts []types.Post
+	posts := make([]types.Post, 0, len(p))
 
 	for _, post := range p {
 		posts = append(posts, mapPostMetadata(post))
@@ -36,7 +36,7 @@ func mapPosts(p []models.Post) []types.Post {
 }
 
 func mapPostHandles(p []models.Post) []string {
-	var handles []string
+	handles := make([]string, 0, len(p))
 
 	for _, post := range p {
 		handles = append(handles, post.URLHandle)
