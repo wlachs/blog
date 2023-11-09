@@ -1,4 +1,4 @@
-package database
+package repository
 
 import (
 	"fmt"
@@ -8,12 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	Agent *gorm.DB
-)
-
-// InitDB establishes the DB connection
-func InitDB() error {
+// ConnectToMySQL establishes the DB connection
+func connectToMySQL() (*gorm.DB, error) {
 	MysqlUser := os.Getenv("MYSQL_USER")
 	MysqlPassword := os.Getenv("MYSQL_PASSWORD")
 	MysqlDatabase := os.Getenv("MYSQL_DATABASE")
@@ -28,13 +24,5 @@ func InitDB() error {
 		MysqlPort,
 		MysqlDatabase,
 	)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		return err
-	}
-
-	Agent = db
-
-	return nil
+	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
 }
