@@ -49,20 +49,20 @@ func getLoggerByMode() (*zap.Logger, error) {
 
 // Debug logs a message with log level DEBUG
 func (log *logger) Debug(msg string, data ...interface{}) {
-	log.Zap.Debug(msg, data)
+	log.Zap.Debugf(msg, data)
 }
 
 // Info logs a message with log level INFO
 func (log *logger) Info(msg string, data ...interface{}) {
-	log.Zap.Info(msg, data)
+	log.Zap.Infof(msg, data)
 }
 
 // Warn logs a message with log level WARN
 func (log *logger) Warn(msg string, data ...interface{}) {
-	log.Zap.Warn(msg, data)
+	log.Zap.Warnf(msg, data)
 }
 
 // Error logs a message with log level ERROR
 func (log *logger) Error(msg string, data ...interface{}) {
-	log.Zap.Error(msg, data)
+	log.Zap.Errorf(msg, data)
 }
