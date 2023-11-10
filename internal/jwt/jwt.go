@@ -1,4 +1,4 @@
-package services
+package jwt
 
 import (
 	"fmt"
@@ -8,8 +8,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var JwtSigningKey = []byte(os.Getenv("JWT_SIGNING_KEY"))
+// signingKey is the JWT secret key stored as an environment variable
+var signingKey = []byte(os.Getenv("JWT_SIGNING_KEY"))
 
+// GenerateJWT creates a JWT containing the following fields:
+// - username
+// - authorized flag
+// - expiration date
 func GenerateJWT(userName string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -18,9 +23,10 @@ func GenerateJWT(userName string) (string, error) {
 	claims["authorized"] = true
 	claims["user"] = userName
 
-	return token.SignedString(JwtSigningKey)
+	return token.SignedString(signingKey)
 }
 
+// ParseJWT parses a token and extracts the user field if valid.
 func ParseJWT(t string) (string, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -29,7 +35,7 @@ func ParseJWT(t string) (string, error) {
 		}
 
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return JwtSigningKey, nil
+		return signingKey, nil
 	})
 
 	if err != nil {

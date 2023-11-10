@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/wlchs/blog/internal/container"
+	"github.com/wlchs/blog/internal/jwt"
 	"github.com/wlchs/blog/internal/types"
 	"net/http"
 
@@ -50,7 +51,7 @@ func (auth authController) Protect(c *gin.Context) {
 
 	if token == "" {
 		c.AbortWithStatus(http.StatusUnauthorized)
-	} else if u, err := services.ParseJWT(token); err == nil {
+	} else if u, err := jwt.ParseJWT(token); err == nil {
 		c.Set("user", u)
 		c.Next()
 	} else {

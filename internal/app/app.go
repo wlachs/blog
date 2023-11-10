@@ -2,10 +2,10 @@ package app
 
 import (
 	"github.com/wlchs/blog/internal/container"
+	"github.com/wlchs/blog/internal/controller"
 	"github.com/wlchs/blog/internal/logger"
 	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/services"
-	"github.com/wlchs/blog/internal/transport/rest"
 )
 
 // Run initializes the application:
@@ -20,5 +20,5 @@ func Run() {
 	cont := container.CreateContainer(log, rep)
 
 	services.InitActions(cont)
-	rest.CreateRoutes(cont)
+	controller.CreateRoutes(cont)
 }
