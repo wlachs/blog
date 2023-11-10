@@ -20,35 +20,38 @@ type UserController interface {
 
 // userController is a concrete implementation of the UserController interface.
 type userController struct {
-	cont container.Container
+	cont        container.Container
+	userService services.UserService
 }
 
 // CreateUserController instantiates a user controller user the application container.
 func CreateUserController(cont container.Container) UserController {
-	return &userController{cont: cont}
+	return &userController{cont, services.CreateUserService(cont)}
 }
 
 // GetUser middleware. Top level handler of /user/:userName GET requests.
-func (user userController) GetUser(c *gin.Context) {
+func (u userController) GetUser(c *gin.Context) {
+	userService := u.userService
 	userName, found := c.Params.Get("userName")
 
 	if !found {
-		c.AbortWithStatusJSON(http.StatusBadRequest, "No userName provided!")
+		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUsernameError{})
 		return
 	}
 
-	u, err := services.GetUser(userName)
+	user, err := userService.GetUser(userName)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, u)
+	c.IndentedJSON(http.StatusOK, user)
 }
 
 // GetUsers middleware. Top level handler of /users GET requests.
-func (user userController) GetUsers(c *gin.Context) {
-	users, err := services.GetUsers()
+func (u userController) GetUsers(c *gin.Context) {
+	userService := u.userService
+	users, err := userService.GetUsers()
 	if err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -58,7 +61,9 @@ func (user userController) GetUsers(c *gin.Context) {
 }
 
 // UpdateUser middleware. Top level handler of /users/:userName PUT requests.
-func (user userController) UpdateUser(c *gin.Context) {
+func (u userController) UpdateUser(c *gin.Context) {
+	userService := u.userService
+
 	var p types.UserUpdateInput
 	if err := c.BindJSON(&p); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
@@ -73,7 +78,7 @@ func (user userController) UpdateUser(c *gin.Context) {
 	newUser.UserName = oldUser.UserName
 	newUser.Password = p.NewPassword
 
-	u, err := services.UpdateUser(oldUser, newUser)
+	user, err := userService.UpdateUser(&oldUser, &newUser)
 	if err != nil {
 		var incorrectUsernameOrPasswordError errortypes.IncorrectUsernameOrPasswordError
 		if errors.As(err, &incorrectUsernameOrPasswordError) {
@@ -85,5 +90,5 @@ func (user userController) UpdateUser(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusOK, u)
+	c.IndentedJSON(http.StatusOK, user)
 }

@@ -29,7 +29,23 @@ type userService struct {
 
 // CreateUserService instantiates the userService using the application container.
 func CreateUserService(cont container.Container) UserService {
-	return &userService{cont: cont}
+	u := &userService{cont}
+	initUserService(u)
+	return u
+}
+
+// initUserService contains logic that should be executed directly upon initialization.
+// For now, it takes care of adding the main user to the system if doesn't exist.
+func initUserService(service *userService) {
+	log := service.cont.GetLogger()
+
+	// Create user if it doesn't exist yet
+	if err := service.RegisterFirstUser(); err != nil {
+		log.Errorf("first user registration failed: %s", err)
+		os.Exit(1)
+	}
+
+	log.Infoln("init actions done")
 }
 
 // AuthenticateUser authenticates the user.
