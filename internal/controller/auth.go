@@ -18,23 +18,25 @@ type AuthController interface {
 
 // authController is a concrete implementation of the AuthController interface.
 type authController struct {
-	cont container.Container
+	cont        container.Container
+	userService services.UserService
 }
 
 // CreateAuthController instantiates the AuthController using the application container.
 func CreateAuthController(cont container.Container) AuthController {
-	return &authController{cont: cont}
+	return &authController{cont, services.CreateUserService(cont)}
 }
 
 // Login middleware. Top level handler of /login POST requests.
 func (auth authController) Login(c *gin.Context) {
-	var u types.UserLoginInput
+	userService := auth.userService
 
+	var u types.UserLoginInput
 	if err := c.BindJSON(&u); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 	}
 
-	token, err := services.AuthenticateUser(u)
+	token, err := userService.AuthenticateUser(&u)
 
 	if err != nil {
 		_ = c.AbortWithError(http.StatusUnauthorized, err)
