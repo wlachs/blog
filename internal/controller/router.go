@@ -32,7 +32,7 @@ func CreateRoutes(cont container.Container) {
 	err := router.Run(":" + port)
 
 	if err != nil {
-		log.Error("error encountered in router: %s", err)
+		log.Errorf("error encountered in router: %v", err)
 		os.Exit(1)
 	}
 }

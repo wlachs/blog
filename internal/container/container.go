@@ -1,22 +1,22 @@
 package container
 
 import (
-	"github.com/wlchs/blog/internal/logger"
 	"github.com/wlchs/blog/internal/repository"
+	"go.uber.org/zap"
 )
 
 // Container interface defining core application utilities such as logging and DB connectivity
 type Container interface {
-	GetLogger() logger.Logger
+	GetLogger() *zap.SugaredLogger
 	GetRepository() repository.Repository
 }
 
 type container struct {
-	logger     logger.Logger
+	logger     *zap.SugaredLogger
 	repository repository.Repository
 }
 
-func CreateContainer(log logger.Logger, rep repository.Repository) Container {
+func CreateContainer(log *zap.SugaredLogger, rep repository.Repository) Container {
 	return &container{
 		logger:     log,
 		repository: rep,
@@ -24,7 +24,7 @@ func CreateContainer(log logger.Logger, rep repository.Repository) Container {
 }
 
 // GetLogger returns the logger implementation stored in the container
-func (cont container) GetLogger() logger.Logger {
+func (cont container) GetLogger() *zap.SugaredLogger {
 	return cont.logger
 }
 
