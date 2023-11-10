@@ -2,8 +2,10 @@ package services
 
 import (
 	"fmt"
+	"github.com/wlchs/blog/internal/auth"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
+	"github.com/wlchs/blog/internal/jwt"
 	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/types"
 	"os"
@@ -11,11 +13,51 @@ import (
 
 // UserService interface. Defines user-related business logic.
 type UserService interface {
+	AuthenticateUser(user *types.UserLoginInput) (string, error)
+	CheckUserPassword(user *types.UserLoginInput) bool
+	GetUser(userName string) (types.User, error)
+	GetUsers() ([]types.User, error)
+	RegisterFirstUser() error
+	RegisterUser(user *types.UserLoginInput) (types.User, error)
+	UpdateUser(oldUser *types.UserLoginInput, newUser *types.UserLoginInput) (types.User, error)
 }
 
 // userService is the concrete implementation of the UserService interface.
 type userService struct {
 	cont container.Container
+}
+
+// CreateUserService instantiates the userService using the application container.
+func CreateUserService(cont container.Container) UserService {
+	return &userService{cont: cont}
+}
+
+// AuthenticateUser authenticates the user.
+// If the password hash matches the one stored in the database, a JWT is generated.
+func (u userService) AuthenticateUser(user *types.UserLoginInput) (string, error) {
+	log := u.cont.GetLogger()
+
+	if !u.CheckUserPassword(user) {
+		log.Debugf("the provided password hash for user \"%s\" doesn't match the one stored in the DB", user.UserName)
+		return "", errortypes.IncorrectUsernameOrPasswordError{}
+	}
+
+	log.Debugf("authentication complete for user: %s", user.UserName)
+	return jwt.GenerateJWT(user.UserName)
+}
+
+// CheckUserPassword fetches the user's password hash from the database and compares it to the input.
+func (u userService) CheckUserPassword(user *types.UserLoginInput) bool {
+	log := u.cont.GetLogger()
+	userRepository := u.cont.GetUserRepository()
+
+	userModel, err := userRepository.GetUser(user.UserName)
+	if err != nil {
+		log.Errorf("failed to get user %s from DB: %v", user.UserName, err)
+		return false
+	}
+
+	return auth.CompareStringWithHash(user.Password, userModel.PasswordHash)
 }
 
 // GetUser retrieves a user by userName and creates a user data object.
@@ -65,7 +107,7 @@ func (u userService) RegisterUser(user *types.UserLoginInput) (types.User, error
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
-	hash, err := HashString(user.Password)
+	hash, err := auth.HashString(user.Password)
 	if err != nil {
 		log.Debugf("failed to calculate password hash: %v", err)
 		return types.User{}, err
@@ -86,12 +128,12 @@ func (u userService) UpdateUser(oldUser *types.UserLoginInput, newUser *types.Us
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
-	if ok := CheckUserPassword(*oldUser); !ok {
+	if ok := u.CheckUserPassword(oldUser); !ok {
 		log.Debugf("incorrect password for user: %s", oldUser.UserName)
 		return types.User{}, errortypes.IncorrectUsernameOrPasswordError{}
 	}
 
-	hash, err := HashString(newUser.Password)
+	hash, err := auth.HashString(newUser.Password)
 	if err != nil {
 		log.Debugf("failed to hash new password for user: %s", newUser.UserName)
 		return types.User{}, errortypes.PasswordHashingError{}
