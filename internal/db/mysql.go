@@ -1,4 +1,4 @@
-package repository
+package db
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 // ConnectToMySQL establishes the DB connection
-func connectToMySQL() (*gorm.DB, error) {
+func ConnectToMySQL() (*gorm.DB, error) {
 	MysqlUser := os.Getenv("MYSQL_USER")
 	MysqlPassword := os.Getenv("MYSQL_PASSWORD")
 	MysqlDatabase := os.Getenv("MYSQL_DATABASE")
