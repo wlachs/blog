@@ -69,15 +69,9 @@ func (user userController) UpdateUser(c *gin.Context) {
 	oldUser.UserName, _ = c.Params.Get("userName")
 	oldUser.Password = p.OldPassword
 
-	hash, err := services.HashString(p.NewPassword)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, err)
-		return
-	}
-
-	var newUser types.User
+	var newUser types.UserLoginInput
 	newUser.UserName = oldUser.UserName
-	newUser.PasswordHash = hash
+	newUser.Password = p.NewPassword
 
 	u, err := services.UpdateUser(oldUser, newUser)
 	if err != nil {

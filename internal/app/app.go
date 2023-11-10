@@ -17,7 +17,9 @@ import (
 func Run() {
 	log := logger.CreateLogger()
 	rep := repository.CreateRepository()
-	cont := container.CreateContainer(log, rep)
+	postRepository := repository.CreatePostRepository(log, rep)
+	userRepository := repository.CreateUserRepository(log, rep)
+	cont := container.CreateContainer(log, postRepository, userRepository)
 
 	services.InitActions(cont)
 	controller.CreateRoutes(cont)

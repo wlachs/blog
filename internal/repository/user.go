@@ -23,7 +23,7 @@ type UserRepository interface {
 	AddUser(user *types.User) (*User, error)
 	GetUser(userName string) (*User, error)
 	GetUsers() ([]User, error)
-	UpdateUser(user types.User) (*User, error)
+	UpdateUser(user *types.User) (*User, error)
 }
 
 // userRepository is the concrete implementation of the UserRepository interface
@@ -110,7 +110,7 @@ func (u userRepository) GetUsers() ([]User, error) {
 }
 
 // UpdateUser updates an existing user with the provided data.
-func (u userRepository) UpdateUser(user types.User) (*User, error) {
+func (u userRepository) UpdateUser(user *types.User) (*User, error) {
 	log := u.logger
 	repo := u.repository
 
