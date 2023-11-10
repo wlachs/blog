@@ -19,18 +19,20 @@ type PostController interface {
 
 // postController is a concrete implementation of the PostController interface
 type postController struct {
-	container container.Container
+	cont        container.Container
+	postService services.PostService
 }
 
 // CreatePostController instantiates a post controller using the application container.
 func CreatePostController(cont container.Container) PostController {
-	return &postController{container: cont}
+	return &postController{cont, services.CreatePostService(cont)}
 }
 
 // AddPost middleware. Top level handler of /posts POST requests.
 func (controller postController) AddPost(c *gin.Context) {
-	var post types.Post
+	postService := controller.postService
 
+	var post types.Post
 	if err := c.BindJSON(&post); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -38,7 +40,7 @@ func (controller postController) AddPost(c *gin.Context) {
 
 	// Set author from context
 	post.Author = c.GetString("user")
-	post, err := services.AddPost(post)
+	post, err := postService.AddPost(&post)
 
 	switch err.(type) {
 	case nil:
@@ -54,14 +56,15 @@ func (controller postController) AddPost(c *gin.Context) {
 
 // GetPost middleware. Top level handler of /posts/:id GET requests.
 func (controller postController) GetPost(c *gin.Context) {
-	id, found := c.Params.Get("id")
+	postService := controller.postService
 
+	id, found := c.Params.Get("id")
 	if !found {
 		c.AbortWithStatusJSON(http.StatusBadRequest, "No id provided!")
 		return
 	}
 
-	post, err := services.GetPost(id)
+	post, err := postService.GetPost(id)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -72,7 +75,9 @@ func (controller postController) GetPost(c *gin.Context) {
 
 // GetPosts middleware. Top level handler of /posts GET requests.
 func (controller postController) GetPosts(c *gin.Context) {
-	posts, err := services.GetPosts()
+	postService := controller.postService
+
+	posts, err := postService.GetPosts()
 	if err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
