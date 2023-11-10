@@ -1,8 +1,7 @@
-package model
+package repository
 
 import (
 	"fmt"
-	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
 	"os"
@@ -35,11 +34,11 @@ type PostRepository interface {
 // postRepository is the concrete implementation of the PostRepository interface.
 type postRepository struct {
 	logger     *zap.SugaredLogger
-	repository repository.Repository
+	repository Repository
 }
 
 // CreatePostRepository instantiates the postRepository
-func CreatePostRepository(logger *zap.SugaredLogger, repository repository.Repository) PostRepository {
+func CreatePostRepository(logger *zap.SugaredLogger, repository Repository) PostRepository {
 	initPostModel(logger, repository)
 
 	return &postRepository{
@@ -49,7 +48,7 @@ func CreatePostRepository(logger *zap.SugaredLogger, repository repository.Repos
 }
 
 // initPostModel initializes the Post schema in the database
-func initPostModel(logger *zap.SugaredLogger, repository repository.Repository) {
+func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 	if err := repository.AutoMigrate(&Post{}); err != nil {
 		logger.Errorf("failed to initialize post model: %v", err)
 		os.Exit(1)

@@ -1,8 +1,7 @@
-package model
+package repository
 
 import (
 	"fmt"
-	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
 	"os"
@@ -30,11 +29,11 @@ type UserRepository interface {
 // userRepository is the concrete implementation of the UserRepository interface
 type userRepository struct {
 	logger     *zap.SugaredLogger
-	repository repository.Repository
+	repository Repository
 }
 
 // CreateUserRepository instantiates the userRepository using the logger and the global repository.
-func CreateUserRepository(logger *zap.SugaredLogger, repository repository.Repository) UserRepository {
+func CreateUserRepository(logger *zap.SugaredLogger, repository Repository) UserRepository {
 	initUserModel(logger, repository)
 
 	return &userRepository{
@@ -44,7 +43,7 @@ func CreateUserRepository(logger *zap.SugaredLogger, repository repository.Repos
 }
 
 // initUserModel initializes the User schema in the database
-func initUserModel(logger *zap.SugaredLogger, repository repository.Repository) {
+func initUserModel(logger *zap.SugaredLogger, repository Repository) {
 	if err := repository.AutoMigrate(&User{}); err != nil {
 		logger.Errorf("failed to initialize user model: %v", err)
 		os.Exit(1)

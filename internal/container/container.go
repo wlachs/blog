@@ -8,18 +8,21 @@ import (
 // Container interface defining core application utilities such as logging and DB connectivity
 type Container interface {
 	GetLogger() *zap.SugaredLogger
-	GetRepository() repository.Repository
+	GetPostRepository() repository.PostRepository
+	GetUserRepository() repository.UserRepository
 }
 
 type container struct {
-	logger     *zap.SugaredLogger
-	repository repository.Repository
+	logger         *zap.SugaredLogger
+	postRepository repository.PostRepository
+	userRepository repository.UserRepository
 }
 
-func CreateContainer(log *zap.SugaredLogger, rep repository.Repository) Container {
+func CreateContainer(log *zap.SugaredLogger, postRepository repository.PostRepository, userRepository repository.UserRepository) Container {
 	return &container{
-		logger:     log,
-		repository: rep,
+		logger:         log,
+		postRepository: postRepository,
+		userRepository: userRepository,
 	}
 }
 
@@ -28,7 +31,12 @@ func (cont container) GetLogger() *zap.SugaredLogger {
 	return cont.logger
 }
 
-// GetRepository returns the repository implementation stored in the container
-func (cont container) GetRepository() repository.Repository {
-	return cont.repository
+// GetPostRepository returns the post repository implementation stored in the container
+func (cont container) GetPostRepository() repository.PostRepository {
+	return cont.postRepository
+}
+
+// GetUserRepository returns the user repository implementation stored in the container
+func (cont container) GetUserRepository() repository.UserRepository {
+	return cont.userRepository
 }
