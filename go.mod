@@ -4,6 +4,8 @@ go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang/mock v1.6.0
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.15.0
 	gorm.io/gorm v1.25.5
@@ -11,7 +13,9 @@ require (
 
 require (
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 )
 
