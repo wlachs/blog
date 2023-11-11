@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/jwt"
+	"github.com/wlchs/blog/internal/errortypes"
 	"github.com/wlchs/blog/internal/types"
 	"net/http"
 
@@ -49,14 +49,15 @@ func (auth authController) Login(c *gin.Context) {
 
 // Protect middleware. Can be used before any middleware to make sure only authenticated users are able to use an endpoint.
 func (auth authController) Protect(c *gin.Context) {
+	jwtUtils := auth.cont.GetJWTUtils()
 	token := c.Request.Header.Get("X-Auth-Token")
 
 	if token == "" {
-		c.AbortWithStatus(http.StatusUnauthorized)
-	} else if u, err := jwt.ParseJWT(token); err == nil {
+		_ = c.AbortWithError(http.StatusUnauthorized, errortypes.MissingAuthTokenError{})
+	} else if u, err := jwtUtils.ParseJWT(token); err == nil {
 		c.Set("user", u)
 		c.Next()
 	} else {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		_ = c.AbortWithError(http.StatusUnauthorized, errortypes.InvalidAuthTokenError{})
 	}
 }
