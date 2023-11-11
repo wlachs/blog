@@ -23,8 +23,8 @@ type authController struct {
 }
 
 // CreateAuthController instantiates the AuthController using the application container.
-func CreateAuthController(cont container.Container) AuthController {
-	return &authController{cont, services.CreateUserService(cont)}
+func CreateAuthController(cont container.Container, userService services.UserService) AuthController {
+	return &authController{cont, userService}
 }
 
 // Login middleware. Top level handler of /login POST requests.
@@ -33,7 +33,7 @@ func (auth authController) Login(c *gin.Context) {
 
 	var u types.UserLoginInput
 	if err := c.BindJSON(&u); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	token, err := userService.AuthenticateUser(&u)

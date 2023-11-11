@@ -24,8 +24,8 @@ type postController struct {
 }
 
 // CreatePostController instantiates a post controller using the application container.
-func CreatePostController(cont container.Container) PostController {
-	return &postController{cont, services.CreatePostService(cont)}
+func CreatePostController(cont container.Container, postService services.PostService) PostController {
+	return &postController{cont, postService}
 }
 
 // AddPost middleware. Top level handler of /posts POST requests.

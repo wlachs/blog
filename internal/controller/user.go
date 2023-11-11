@@ -25,8 +25,8 @@ type userController struct {
 }
 
 // CreateUserController instantiates a user controller user the application container.
-func CreateUserController(cont container.Container) UserController {
-	return &userController{cont, services.CreateUserService(cont)}
+func CreateUserController(cont container.Container, userService services.UserService) UserController {
+	return &userController{cont, userService}
 }
 
 // GetUser middleware. Top level handler of /user/:userName GET requests.

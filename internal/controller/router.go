@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/wlchs/blog/internal/container"
+	"github.com/wlchs/blog/internal/services"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -12,21 +13,25 @@ func CreateRoutes(cont container.Container) {
 	log := cont.GetLogger()
 	router := gin.Default()
 
+	// Services
+	postService := services.CreatePostService(cont)
+	userService := services.CreateUserService(cont)
+
 	// Controllers
-	auth := CreateAuthController(cont)
-	post := CreatePostController(cont)
-	user := CreateUserController(cont)
+	authController := CreateAuthController(cont, userService)
+	postController := CreatePostController(cont, postService)
+	userController := CreateUserController(cont, userService)
 
 	// Posts
-	router.GET("/posts", post.GetPosts)
-	router.GET("/posts/:id", post.GetPost)
-	router.POST("/posts", auth.Protect, post.AddPost)
+	router.GET("/posts", postController.GetPosts)
+	router.GET("/posts/:id", postController.GetPost)
+	router.POST("/posts", authController.Protect, postController.AddPost)
 
 	// Users
-	router.GET("/users", user.GetUsers)
-	router.GET("/users/:userName", user.GetUser)
-	router.PUT("/users/:userName", user.UpdateUser)
-	router.POST("/login", auth.Login)
+	router.GET("/users", userController.GetUsers)
+	router.GET("/users/:userName", userController.GetUser)
+	router.PUT("/users/:userName", userController.UpdateUser)
+	router.POST("/login", authController.Login)
 
 	port := os.Getenv("PORT")
 	err := router.Run(":" + port)
