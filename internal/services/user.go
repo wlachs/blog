@@ -5,7 +5,6 @@ import (
 	"github.com/wlchs/blog/internal/auth"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
-	"github.com/wlchs/blog/internal/jwt"
 	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/types"
 	"os"
@@ -52,6 +51,7 @@ func initUserService(service *userService) {
 // If the password hash matches the one stored in the database, a JWT is generated.
 func (u userService) AuthenticateUser(user *types.UserLoginInput) (string, error) {
 	log := u.cont.GetLogger()
+	jwtUtils := u.cont.GetJWTUtils()
 
 	if !u.CheckUserPassword(user) {
 		log.Debugf("the provided password hash for user \"%s\" doesn't match the one stored in the DB", user.UserName)
@@ -59,7 +59,7 @@ func (u userService) AuthenticateUser(user *types.UserLoginInput) (string, error
 	}
 
 	log.Debugf("authentication complete for user: %s", user.UserName)
-	return jwt.GenerateJWT(user.UserName)
+	return jwtUtils.GenerateJWT(user.UserName)
 }
 
 // CheckUserPassword fetches the user's password hash from the database and compares it to the input.
