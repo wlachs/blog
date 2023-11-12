@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
@@ -39,12 +38,16 @@ func (u userController) GetUser(c *gin.Context) {
 	}
 
 	user, err := userService.GetUser(userName)
-	if err != nil {
-		_ = c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, user)
 
-	c.IndentedJSON(http.StatusOK, user)
+	case errortypes.UserNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{User: types.User{UserName: userName}})
+	}
 }
 
 // GetUsers middleware. Top level handler of /users GET requests.
@@ -52,7 +55,7 @@ func (u userController) GetUsers(c *gin.Context) {
 	userService := u.userService
 	users, err := userService.GetUsers()
 	if err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{})
 		return
 	}
 
@@ -77,16 +80,14 @@ func (u userController) UpdateUser(c *gin.Context) {
 	newUser.Password = p.NewPassword
 
 	user, err := userService.UpdateUser(&oldUser, &newUser)
-	if err != nil {
-		var incorrectUsernameOrPasswordError errortypes.IncorrectUsernameOrPasswordError
-		if errors.As(err, &incorrectUsernameOrPasswordError) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, incorrectUsernameOrPasswordError.Error())
-			return
-		} else {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-	}
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, user)
 
-	c.IndentedJSON(http.StatusOK, user)
+	case errortypes.IncorrectUsernameOrPasswordError:
+		_ = c.AbortWithError(http.StatusUnauthorized, err)
+
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{User: types.User{UserName: oldUser.UserName}})
+	}
 }

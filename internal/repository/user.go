@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"fmt"
+	"github.com/wlchs/blog/internal/errortypes"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
 	"os"
@@ -87,7 +87,7 @@ func (u userRepository) GetUser(userName string) (*User, error) {
 
 	if result.RowsAffected == 0 {
 		log.Debugf("no user found: %v", user)
-		return nil, fmt.Errorf("user with name: %s not found", userName)
+		return nil, errortypes.UserNotFoundError{User: types.User{UserName: userName}}
 	}
 
 	log.Debugf("retrieved user: %v", user)
