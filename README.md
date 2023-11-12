@@ -1,16 +1,21 @@
 # wlchs/blog
+
 Lightweight blog engine implemented in Go
 
 ---
 
 ## How to run
+
 Follow the guide to deploy your very own blog engine!
 
 ### Prerequisites
+
 For a successful deployment, you need Docker.
-You can use [Docker Desktop](https://docs.docker.com/desktop/) or [Colima](https://github.com/abiosoft/colima) if you prefer a command-line-only solution.
+You can use [Docker Desktop](https://docs.docker.com/desktop/) or [Colima](https://github.com/abiosoft/colima) if you prefer a
+command-line-only solution.
 
 ### Configuration
+
 To customize the blog engine, you must edit the configuration files.
 These contain, among other essential settings, the primary user's name.
 The configuration files are at [build/env](./build/env).
@@ -19,22 +24,32 @@ The configuration files are at [build/env](./build/env).
 I highly recommend you change the **highlighted** properties.
 
 **core.env:**
-* **JWT_SIGNING_KEY**: This should be a strong password used for signing authentication tokens.
-* GIN_MODE: Leave in on "RELEASE" unless you know what you're doing.
-* **DEFAULT_USER**: Name of the primary user. Change this to your name.
-* **DEFAULT_PASSWORD**: Primary user's password.
+
+| Key                  | Default | Description                                                              |
+|----------------------|---------|--------------------------------------------------------------------------|
+| **JWT_SIGNING_KEY**  | -       | This should be a strong password used for signing authentication tokens. |
+| **DEFAULT_USER**     | -       | Name of the primary user. Change this to your name.                      |
+| **DEFAULT_PASSWORD** | -       | Primary user's password.                                                 |
+| GIN_MODE             | RELEASE | Leave in on "RELEASE" unless you know what you're doing.                 |
 
 **shared.env:**
-* MYSQL_USER: Database username. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_PASSWORD: Database password. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_DATABASE: Database schema. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_HOST: Database hostname. Change this if you use your database instead of the one in the docker container.
-* MYSQL_PORT: Database port. Change this if you use your database instead of the one in the docker container.
+
+| Key            | Default    | Description                                                                                         |
+|----------------|------------|-----------------------------------------------------------------------------------------------------|
+| MYSQL_USER     | blog_admin | Database username. There is no need to change if you use the preconfigured MySQL docker container.  |
+| MYSQL_PASSWORD | password   | Database password. There is no need to change if you use the preconfigured MySQL docker container.  |
+| MYSQL_DATABASE | blog       | Database schema. There is no need to change if you use the preconfigured MySQL docker container.    |
+| MYSQL_HOST     | db         | Database hostname. Change this if you use your database instead of the one in the docker container. |
+| MYSQL_PORT     | 3306       | Database port. Change this if you use your database instead of the one in the docker container.     |
 
 **db.env:**
-* MYSQL_ROOT_PASSWORD: Database root password. There is no need to provide it if you use your database.
+
+| Key                 | Default | Description                                                                      |
+|---------------------|---------|----------------------------------------------------------------------------------|
+| MYSQL_ROOT_PASSWORD | -       | Database root password. There is no need to provide it if you use your database. |
 
 ### Deployment
+
 After successfully customizing your configuration files, there is only one more step: deployment.
 
 ```sh
@@ -43,6 +58,7 @@ docker compose up
 ```
 
 ### For contribution and development
+
 There are a few differences if you'd like to run the blog engine in developer mode to test it or contribute.
 
 First, you need a database. You can deploy a MySQL database in a Docker container like in a "real" release.
@@ -67,7 +83,7 @@ export DEFAULT_PASSWORD=Test1234
 
 Of course, you should change the values to match the ones you have used for the database deployment.
 
-Last but not least, you have to install Go. 
+Last but not least, you have to install Go.
 If you are using macOS and have Homebrew installed, you can install Go by running the following command:
 
 ```sh
