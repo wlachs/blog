@@ -1,13 +1,12 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
+	"github.com/wlchs/blog/internal/services"
 	"github.com/wlchs/blog/internal/types"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/services"
 )
 
 // PostController interface defining post-related middleware methods to handle HTTP requests
@@ -32,15 +31,14 @@ func CreatePostController(cont container.Container, postService services.PostSer
 func (controller postController) AddPost(c *gin.Context) {
 	postService := controller.postService
 
-	var post types.Post
-	if err := c.BindJSON(&post); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, err)
+	var body types.Post
+	if err := c.BindJSON(&body); err != nil {
 		return
 	}
 
 	// Set author from context
-	post.Author = c.GetString("user")
-	post, err := postService.AddPost(&post)
+	body.Author = c.GetString("user")
+	post, err := postService.AddPost(&body)
 
 	switch err.(type) {
 	case nil:
@@ -50,7 +48,7 @@ func (controller postController) AddPost(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusConflict, err)
 
 	default:
-		_ = c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{Post: body})
 	}
 }
 
@@ -60,17 +58,22 @@ func (controller postController) GetPost(c *gin.Context) {
 
 	id, found := c.Params.Get("id")
 	if !found {
-		c.AbortWithStatusJSON(http.StatusBadRequest, "No id provided!")
+		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUrlHandleError{})
 		return
 	}
 
 	post, err := postService.GetPost(id)
-	if err != nil {
-		_ = c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
 
-	c.IndentedJSON(http.StatusOK, post)
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, post)
+
+	case errortypes.PostNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{Post: types.Post{URLHandle: id}})
+	}
 }
 
 // GetPosts middleware. Top level handler of /posts GET requests.
@@ -79,7 +82,7 @@ func (controller postController) GetPosts(c *gin.Context) {
 
 	posts, err := postService.GetPosts()
 	if err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{})
 		return
 	}
 

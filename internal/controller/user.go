@@ -2,13 +2,12 @@ package controller
 
 import (
 	"errors"
+	"github.com/gin-gonic/gin"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
+	"github.com/wlchs/blog/internal/services"
 	"github.com/wlchs/blog/internal/types"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/services"
 )
 
 // UserController interface defining user-related middleware methods to handler HTTP requests.
@@ -66,7 +65,6 @@ func (u userController) UpdateUser(c *gin.Context) {
 
 	var p types.UserUpdateInput
 	if err := c.BindJSON(&p); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 

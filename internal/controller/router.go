@@ -1,11 +1,10 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/services"
 	"os"
-
-	"github.com/gin-gonic/gin"
 )
 
 // CreateRoutes initializes and serves the REST API
@@ -18,20 +17,20 @@ func CreateRoutes(cont container.Container) {
 	userService := services.CreateUserService(cont)
 
 	// Controllers
-	authController := CreateAuthController(cont, userService)
-	postController := CreatePostController(cont, postService)
-	userController := CreateUserController(cont, userService)
+	authCtrl := CreateAuthController(cont, userService)
+	postCtrl := CreatePostController(cont, postService)
+	userCtrl := CreateUserController(cont, userService)
 
 	// Posts
-	router.GET("/posts", postController.GetPosts)
-	router.GET("/posts/:id", postController.GetPost)
-	router.POST("/posts", authController.Protect, postController.AddPost)
+	router.GET("/posts", postCtrl.GetPosts)
+	router.GET("/posts/:id", postCtrl.GetPost)
+	router.POST("/posts", authCtrl.Protect, postCtrl.AddPost)
 
 	// Users
-	router.GET("/users", userController.GetUsers)
-	router.GET("/users/:userName", userController.GetUser)
-	router.PUT("/users/:userName", userController.UpdateUser)
-	router.POST("/login", authController.Login)
+	router.GET("/users", userCtrl.GetUsers)
+	router.GET("/users/:userName", userCtrl.GetUser)
+	router.PUT("/users/:userName", userCtrl.UpdateUser)
+	router.POST("/login", authCtrl.Login)
 
 	port := os.Getenv("PORT")
 	err := router.Run(":" + port)
