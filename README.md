@@ -4,17 +4,17 @@ Lightweight blog engine implemented in Go
 
 ---
 
-## How to run
+# Setup
 
 Follow the guide to deploy your very own blog engine!
 
-### Prerequisites
+## Prerequisites
 
 For a successful deployment, you need Docker.
 You can use [Docker Desktop](https://docs.docker.com/desktop/) or [Colima](https://github.com/abiosoft/colima) if you prefer a
 command-line-only solution.
 
-### Configuration
+## Configuration
 
 To customize the blog engine, you must edit the configuration files.
 These contain, among other essential settings, the primary user's name.
@@ -48,7 +48,7 @@ I highly recommend you change the **highlighted** properties.
 |---------------------|---------|----------------------------------------------------------------------------------|
 | MYSQL_ROOT_PASSWORD | -       | Database root password. There is no need to provide it if you use your database. |
 
-### Deployment
+## Deployment
 
 After successfully customizing your configuration files, there is only one more step: deployment.
 
@@ -57,7 +57,7 @@ docker compose build
 docker compose up
 ```
 
-### For contribution and development
+## For contribution and development
 
 There are a few differences if you'd like to run the blog engine in developer mode to test it or contribute.
 
@@ -97,3 +97,6 @@ go run .
 ```
 
 Happy coding!
+
+# Testing
+tbd.
