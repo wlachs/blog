@@ -58,6 +58,9 @@ func (p postService) GetPosts() ([]types.Post, error) {
 
 // mapPost maps a Post model to a post data object
 func mapPost(p *repository.Post) types.Post {
+	if p == nil {
+		return types.Post{}
+	}
 	return types.Post{
 		URLHandle:    p.URLHandle,
 		Title:        p.Title,
@@ -70,6 +73,9 @@ func mapPost(p *repository.Post) types.Post {
 
 // mapPostMetadata maps a Post model to a post metadata object
 func mapPostMetadata(p *repository.Post) types.Post {
+	if p == nil {
+		return types.Post{}
+	}
 	return types.Post{
 		URLHandle:    p.URLHandle,
 		Title:        p.Title,
@@ -81,6 +87,9 @@ func mapPostMetadata(p *repository.Post) types.Post {
 
 // mapPosts maps a slice of Post models to a slice of post data objects
 func mapPosts(p []repository.Post) []types.Post {
+	if p == nil {
+		return []types.Post{}
+	}
 	posts := make([]types.Post, 0, len(p))
 
 	for _, post := range p {

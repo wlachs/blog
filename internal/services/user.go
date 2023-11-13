@@ -172,6 +172,9 @@ func (u userService) UpdateUser(oldUser *types.UserLoginInput, newUser *types.Us
 
 // mapUSer maps a User model to a user data object
 func mapUser(u *repository.User) types.User {
+	if u == nil {
+		return types.User{}
+	}
 	return types.User{
 		UserName:     u.UserName,
 		PasswordHash: u.PasswordHash,
@@ -181,6 +184,9 @@ func mapUser(u *repository.User) types.User {
 
 // mapUsers maps a slice of User models to a slice of user data objects
 func mapUsers(u []repository.User) []types.User {
+	if u == nil {
+		return []types.User{}
+	}
 	users := make([]types.User, 0, len(u))
 
 	for _, user := range u {
