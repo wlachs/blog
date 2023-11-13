@@ -82,12 +82,10 @@ func (u userRepository) GetUser(userName string) (*User, error) {
 
 	if result.Error != nil {
 		log.Debugf("failed to retrieve user: %v, error: %v", user, result.Error)
+		if result.Error.Error() == "record not found" {
+			return nil, errortypes.UserNotFoundError{User: types.User{UserName: userName}}
+		}
 		return nil, result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		log.Debugf("no user found: %v", user)
-		return nil, errortypes.UserNotFoundError{User: types.User{UserName: userName}}
 	}
 
 	log.Debugf("retrieved user: %v", user)
