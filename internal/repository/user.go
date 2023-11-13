@@ -117,7 +117,7 @@ func (u userRepository) UpdateUser(user *types.User) (*User, error) {
 	userToUpdate := User{UserName: user.UserName}
 	pw := User{PasswordHash: user.PasswordHash}
 
-	if result := repo.Where(&user).Updates(&pw); result.Error != nil {
+	if result := repo.Where(&userToUpdate).Updates(&pw); result.Error != nil {
 		log.Debugf("failed to update user %v, error: %v", userToUpdate, result.Error)
 		return nil, result.Error
 	}
