@@ -94,12 +94,10 @@ func (p postRepository) GetPost(urlHandle string) (*Post, error) {
 
 	if result.Error != nil {
 		log.Debugf("failed to retrieve post with handle: %s, error: %v", urlHandle, result.Error)
+		if result.Error.Error() == "record not found" {
+			return nil, errortypes.PostNotFoundError{Post: types.Post{URLHandle: urlHandle}}
+		}
 		return nil, result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		log.Debugf("post with handle %s not found", urlHandle)
-		return nil, errortypes.PostNotFoundError{Post: types.Post{URLHandle: urlHandle}}
 	}
 
 	log.Debugf("retrieved post: %v", post)
