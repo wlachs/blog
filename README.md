@@ -1,5 +1,7 @@
 # wlchs/blog
 
+![CircleCI](https://dl.circleci.com/status-badge/img/circleci/TGBigTiT6XaXL1AJ6eQozq/9bfPtNbp6S3XPXo2a15wNy/tree/main.svg?style=shield&circle-token=d045b5976dddbd61fa4267e01ba2abb4feca1659)
+
 A lightweight blog engine implemented in Go.
 
 ---
