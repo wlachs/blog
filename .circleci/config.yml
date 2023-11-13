@@ -13,7 +13,7 @@ jobs:
       - go/save-cache
       - go/test:
           failfast: true
-          parallel: 4
+          parallel: '4'
           race: true
 workflows:
   test:
