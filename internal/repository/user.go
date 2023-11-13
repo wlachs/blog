@@ -99,11 +99,11 @@ func (u userRepository) GetUsers() ([]User, error) {
 
 	var users []User
 	if result := repo.Preload("Posts").Find(&users); result.Error != nil {
-		log.Debug("failed to retrieve users: %v", result.Error)
+		log.Debugf("failed to retrieve users: %v", result.Error)
 		return []User{}, result.Error
 	}
 
-	log.Debug("retrieved users: %v", users)
+	log.Debugf("retrieved users: %v", users)
 	return users, nil
 }
 
