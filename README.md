@@ -1,16 +1,21 @@
 # wlchs/blog
-Lightweight blog engine implemented in Go
+
+A lightweight blog engine implemented in Go.
 
 ---
 
-## How to run
+# Setup
+
 Follow the guide to deploy your very own blog engine!
 
-### Prerequisites
-For a successful deployment, you need Docker.
-You can use [Docker Desktop](https://docs.docker.com/desktop/) or [Colima](https://github.com/abiosoft/colima) if you prefer a command-line-only solution.
+## Prerequisites
 
-### Configuration
+For a successful deployment, you need Docker.
+You can use [Docker Desktop](https://docs.docker.com/desktop/) or [Colima](https://github.com/abiosoft/colima) if you prefer a
+command-line-only solution.
+
+## Configuration
+
 To customize the blog engine, you must edit the configuration files.
 These contain, among other essential settings, the primary user's name.
 The configuration files are at [build/env](./build/env).
@@ -19,22 +24,32 @@ The configuration files are at [build/env](./build/env).
 I highly recommend you change the **highlighted** properties.
 
 **core.env:**
-* **JWT_SIGNING_KEY**: This should be a strong password used for signing authentication tokens.
-* GIN_MODE: Leave in on "RELEASE" unless you know what you're doing.
-* **DEFAULT_USER**: Name of the primary user. Change this to your name.
-* **DEFAULT_PASSWORD**: Primary user's password.
+
+| Key                  | Default | Description                                                         |
+|----------------------|---------|---------------------------------------------------------------------|
+| **JWT_SIGNING_KEY**  | -       | This should be a strong password for signing authentication tokens. |
+| **DEFAULT_USER**     | -       | Name of the primary user. Change this to your name.                 |
+| **DEFAULT_PASSWORD** | -       | Primary user's password.                                            |
+| GIN_MODE             | RELEASE | Leave in on "RELEASE" unless you know what you're doing.            |
 
 **shared.env:**
-* MYSQL_USER: Database username. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_PASSWORD: Database password. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_DATABASE: Database schema. There is no need to change if you use the preconfigured MySQL docker container.
-* MYSQL_HOST: Database hostname. Change this if you use your database instead of the one in the docker container.
-* MYSQL_PORT: Database port. Change this if you use your database instead of the one in the docker container.
+
+| Key            | Default    | Description                                                                                         |
+|----------------|------------|-----------------------------------------------------------------------------------------------------|
+| MYSQL_USER     | blog_admin | Database username. There is no need to change if you use the preconfigured MySQL docker container.  |
+| MYSQL_PASSWORD | password   | Database password. There is no need to change if you use the preconfigured MySQL docker container.  |
+| MYSQL_DATABASE | blog       | Database schema. There is no need to change if you use the preconfigured MySQL docker container.    |
+| MYSQL_HOST     | db         | Database hostname. Change this if you use your database instead of the one in the docker container. |
+| MYSQL_PORT     | 3306       | Database port. Change this if you use your database instead of the one in the docker container.     |
 
 **db.env:**
-* MYSQL_ROOT_PASSWORD: Database root password. There is no need to provide it if you use your database.
 
-### Deployment
+| Key                 | Default | Description                                                                      |
+|---------------------|---------|----------------------------------------------------------------------------------|
+| MYSQL_ROOT_PASSWORD | -       | Database root password. There is no need to provide it if you use your database. |
+
+## Deployment
+
 After successfully customizing your configuration files, there is only one more step: deployment.
 
 ```sh
@@ -42,8 +57,9 @@ docker compose build
 docker compose up
 ```
 
-### For contribution and development
-There are a few differences if you'd like to run the blog engine in developer mode to test it or contribute.
+## For contribution and development
+
+If you'd like to run the blog engine in developer mode to test it or contribute, there are a few differences.
 
 First, you need a database. You can deploy a MySQL database in a Docker container like in a "real" release.
 Just make sure you remember the username and the password.
@@ -67,7 +83,7 @@ export DEFAULT_PASSWORD=Test1234
 
 Of course, you should change the values to match the ones you have used for the database deployment.
 
-Last but not least, you have to install Go. 
+Last but not least, you have to install Go.
 If you are using macOS and have Homebrew installed, you can install Go by running the following command:
 
 ```sh
@@ -81,3 +97,24 @@ go run .
 ```
 
 Happy coding!
+
+# Testing
+
+To ensure the stability of the blog engine and that new features don't accidentally break existing ones, I've decided to implement unit
+tests. You can follow the current state of test coverage on various software components in the table below.
+
+| Component        | Coverage (%) | State              |
+|------------------|--------------|--------------------|
+| **Controllers**  |              |                    |
+| AuthController   | 100%         | :white_check_mark: |
+| PostController   | 100%         | :white_check_mark: |
+| UserController   | 100%         | :white_check_mark: |
+| **Services**     |              |                    |
+| PostService      | 0%           | :x:                |
+| UserService      | 0%           | :x:                |
+| **Repositories** |              |                    |
+| PostRepository   | 0%           | :x:                |
+| UserRepository   | 0%           | :x:                |
+| **Utils**        |              |                    |
+| Auth             | 100%         | :white_check_mark: |
+| TokenUtils       | 0%           | :x:                |
