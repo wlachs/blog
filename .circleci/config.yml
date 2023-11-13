@@ -12,6 +12,7 @@ jobs:
       - go/mod-download
       - go/save-cache
       - go/test:
+          covermode: 'atomic'
           failfast: true
           parallel: '4'
           race: true
