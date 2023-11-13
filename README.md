@@ -1,6 +1,6 @@
 # wlchs/blog
 
-Lightweight blog engine implemented in Go
+A lightweight blog engine implemented in Go.
 
 ---
 
@@ -25,12 +25,12 @@ I highly recommend you change the **highlighted** properties.
 
 **core.env:**
 
-| Key                  | Default | Description                                                              |
-|----------------------|---------|--------------------------------------------------------------------------|
-| **JWT_SIGNING_KEY**  | -       | This should be a strong password used for signing authentication tokens. |
-| **DEFAULT_USER**     | -       | Name of the primary user. Change this to your name.                      |
-| **DEFAULT_PASSWORD** | -       | Primary user's password.                                                 |
-| GIN_MODE             | RELEASE | Leave in on "RELEASE" unless you know what you're doing.                 |
+| Key                  | Default | Description                                                         |
+|----------------------|---------|---------------------------------------------------------------------|
+| **JWT_SIGNING_KEY**  | -       | This should be a strong password for signing authentication tokens. |
+| **DEFAULT_USER**     | -       | Name of the primary user. Change this to your name.                 |
+| **DEFAULT_PASSWORD** | -       | Primary user's password.                                            |
+| GIN_MODE             | RELEASE | Leave in on "RELEASE" unless you know what you're doing.            |
 
 **shared.env:**
 
@@ -59,7 +59,7 @@ docker compose up
 
 ## For contribution and development
 
-There are a few differences if you'd like to run the blog engine in developer mode to test it or contribute.
+If you'd like to run the blog engine in developer mode to test it or contribute, there are a few differences.
 
 First, you need a database. You can deploy a MySQL database in a Docker container like in a "real" release.
 Just make sure you remember the username and the password.
@@ -99,4 +99,22 @@ go run .
 Happy coding!
 
 # Testing
-tbd.
+
+To ensure the stability of the blog engine and that new features don't accidentally break existing ones, I've decided to implement unit
+tests. You can follow the current state of test coverage on various software components in the table below.
+
+| Component        | Coverage (%) | State              |
+|------------------|--------------|--------------------|
+| **Controllers**  |              |                    |
+| AuthController   | 100%         | :white_check_mark: |
+| PostController   | 100%         | :white_check_mark: |
+| UserController   | 100%         | :white_check_mark: |
+| **Services**     |              |                    |
+| PostService      | 0%           | :x:                |
+| UserService      | 0%           | :x:                |
+| **Repositories** |              |                    |
+| PostRepository   | 0%           | :x:                |
+| UserRepository   | 0%           | :x:                |
+| **Utils**        |              |                    |
+| Auth             | 100%         | :white_check_mark: |
+| TokenUtils       | 0%           | :x:                |
