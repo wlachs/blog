@@ -73,9 +73,6 @@ func mapPost(p *repository.Post) types.Post {
 
 // mapPostMetadata maps a Post model to a post metadata object
 func mapPostMetadata(p *repository.Post) types.Post {
-	if p == nil {
-		return types.Post{}
-	}
 	return types.Post{
 		URLHandle:    p.URLHandle,
 		Title:        p.Title,
