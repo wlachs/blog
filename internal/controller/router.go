@@ -37,6 +37,5 @@ func CreateRoutes(cont container.Container) {
 
 	if err != nil {
 		log.Errorf("error encountered in router: %v", err)
-		os.Exit(1)
 	}
 }

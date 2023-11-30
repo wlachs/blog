@@ -17,7 +17,6 @@ func getLogger() *zap.SugaredLogger {
 	l, err := getLoggerByMode()
 	if err != nil {
 		fmt.Printf("logging initialization failed: %s", err)
-		os.Exit(1)
 	}
 	return l.Sugar()
 }

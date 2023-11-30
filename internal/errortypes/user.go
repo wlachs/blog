@@ -11,6 +11,12 @@ func (i IncorrectUsernameOrPasswordError) Error() string {
 	return "incorrect username or password"
 }
 
+type MissingDefaultUsernameOrPasswordError struct{}
+
+func (i MissingDefaultUsernameOrPasswordError) Error() string {
+	return "missing default username or password"
+}
+
 type PasswordHashingError struct{}
 
 func (i PasswordHashingError) Error() string {

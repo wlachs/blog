@@ -112,8 +112,8 @@ tests. You can follow the current state of test coverage on various software com
 | PostController   | 100%         | :white_check_mark: |
 | UserController   | 100%         | :white_check_mark: |
 | **Services**     |              |                    |
-| PostService      | 0%           | :x:                |
-| UserService      | 0%           | :x:                |
+| PostService      | 100%         | :white_check_mark: |
+| UserService      | 100%         | :white_check_mark: |
 | **Repositories** |              |                    |
 | PostRepository   | 0%           | :x:                |
 | UserRepository   | 0%           | :x:                |

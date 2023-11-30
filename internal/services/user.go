@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"github.com/wlchs/blog/internal/auth"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
@@ -34,14 +33,14 @@ func CreateUserService(cont container.Container) UserService {
 }
 
 // initUserService contains logic that should be executed directly upon initialization.
-// For now, it takes care of adding the main user to the system if doesn't exist.
+// For now, it takes care of adding the main user to the system if it doesn't exist.
 func initUserService(service *userService) {
 	log := service.cont.GetLogger()
 
 	// Create user if it doesn't exist yet
 	if err := service.RegisterFirstUser(); err != nil {
 		log.Errorf("first user registration failed: %s", err)
-		os.Exit(1)
+		return
 	}
 
 	log.Infoln("init actions done")
@@ -100,11 +99,11 @@ func (u userService) RegisterFirstUser() error {
 	defaultPassword := os.Getenv("DEFAULT_PASSWORD")
 
 	if defaultUser == "" || defaultPassword == "" {
-		return fmt.Errorf("default username or password missing")
+		return errortypes.MissingDefaultUsernameOrPasswordError{}
 	}
 
 	if _, userNotFound := userRepository.GetUser(defaultUser); userNotFound == nil {
-		log.Infof("default user with name %s already exists", defaultPassword)
+		log.Infof("default user with name %s already exists", defaultUser)
 		return nil
 	}
 
@@ -125,8 +124,8 @@ func (u userService) RegisterUser(user *types.UserLoginInput) (types.User, error
 
 	hash, err := auth.HashString(user.Password)
 	if err != nil {
-		log.Debugf("failed to calculate password hash: %v", err)
-		return types.User{}, err
+		log.Errorf("failed to calculate password hash: %v", err)
+		return types.User{}, errortypes.PasswordHashingError{}
 	}
 
 	newUser := types.User{
