@@ -4,7 +4,6 @@ import (
 	"github.com/wlchs/blog/internal/errortypes"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
-	"os"
 	"time"
 )
 
@@ -46,7 +45,6 @@ func CreateUserRepository(logger *zap.SugaredLogger, repository Repository) User
 func initUserModel(logger *zap.SugaredLogger, repository Repository) {
 	if err := repository.AutoMigrate(&User{}); err != nil {
 		logger.Errorf("failed to initialize user model: %v", err)
-		os.Exit(1)
 	}
 }
 

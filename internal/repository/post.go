@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
-	"os"
 	"strings"
 	"time"
 
@@ -51,7 +50,6 @@ func CreatePostRepository(logger *zap.SugaredLogger, repository Repository) Post
 func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 	if err := repository.AutoMigrate(&Post{}); err != nil {
 		logger.Errorf("failed to initialize post model: %v", err)
-		os.Exit(1)
 	}
 }
 
