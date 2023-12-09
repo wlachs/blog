@@ -40,9 +40,9 @@ func TestTokenUtils_ParseJWT(t *testing.T) {
 
 	expectedUserName := "TestAuthor"
 
-	token, err := c.sut.GenerateJWT(expectedUserName)
-
+	token, _ := c.sut.GenerateJWT(expectedUserName)
 	userName, err := c.sut.ParseJWT(token)
+
 	assert.Nil(t, err, "expected to complete without error")
 	assert.Equal(t, expectedUserName, userName, "resolved user name doesn't match the expected value")
 }
