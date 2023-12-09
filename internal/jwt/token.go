@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"os"
 	"time"
 
@@ -18,11 +19,15 @@ type TokenUtils interface {
 }
 
 // jwtUtils struct. Placeholder receiver struct for JWT utils.
-type jwtUtils struct{}
+type jwtUtils struct {
+	logger *zap.SugaredLogger
+}
 
 // CreateJWTUtils instantiates the jwtUtils implementation.
-func CreateJWTUtils() TokenUtils {
-	return &jwtUtils{}
+func CreateJWTUtils(logger *zap.SugaredLogger) TokenUtils {
+	return &jwtUtils{
+		logger: logger,
+	}
 }
 
 // ParseJWT parses a token and extracts the user field if valid.
