@@ -18,20 +18,20 @@ type TokenUtils interface {
 	GenerateJWT(userName string) (string, error)
 }
 
-// jwtUtils struct. Placeholder receiver struct for JWT utils.
-type jwtUtils struct {
+// tokenUtils struct. Placeholder receiver struct for JWT utils.
+type tokenUtils struct {
 	logger *zap.SugaredLogger
 }
 
-// CreateJWTUtils instantiates the jwtUtils implementation.
-func CreateJWTUtils(logger *zap.SugaredLogger) TokenUtils {
-	return &jwtUtils{
+// CreateTokenUtils instantiates the tokenUtils implementation.
+func CreateTokenUtils(logger *zap.SugaredLogger) TokenUtils {
+	return &tokenUtils{
 		logger: logger,
 	}
 }
 
 // ParseJWT parses a token and extracts the user field if valid.
-func (j jwtUtils) ParseJWT(t string) (string, error) {
+func (j tokenUtils) ParseJWT(t string) (string, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -57,7 +57,7 @@ func (j jwtUtils) ParseJWT(t string) (string, error) {
 // - username
 // - authorized flag
 // - expiration date
-func (j jwtUtils) GenerateJWT(userName string) (string, error) {
+func (j tokenUtils) GenerateJWT(userName string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 

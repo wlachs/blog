@@ -20,7 +20,7 @@ func Run() {
 	postRepository := repository.CreatePostRepository(log, rep)
 	userRepository := repository.CreateUserRepository(log, rep)
 
-	jwtUtils := jwt.CreateJWTUtils(log)
+	jwtUtils := jwt.CreateTokenUtils(log)
 
 	cont := container.CreateContainer(
 		log,
