@@ -2,11 +2,10 @@ package jwt
 
 import (
 	"fmt"
+	"github.com/golang-jwt/jwt"
 	"go.uber.org/zap"
 	"os"
 	"time"
-
-	"github.com/golang-jwt/jwt"
 )
 
 // signingKey is the JWT secret key stored as an environment variable
@@ -46,7 +45,7 @@ func (j tokenUtils) ParseJWT(t string) (string, error) {
 		return "", err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && claims["user"] != nil {
 		return claims["user"].(string), nil
 	} else {
 		return "", fmt.Errorf("failed to get jwt claims")
