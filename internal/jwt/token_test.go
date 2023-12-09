@@ -7,18 +7,18 @@ import (
 	"testing"
 )
 
-// jwtTestContext contains objects relevant for testing the TokenUtils.
-type jwtTestContext struct {
+// tokenUtilsTestContext contains objects relevant for testing the TokenUtils.
+type tokenUtilsTestContext struct {
 	sut jwt.TokenUtils
 }
 
-// createJWTServiceContext creates the context for testing the TokenUtils and reduces code duplication.
-func createTokenUtilsContext(t *testing.T) *jwtTestContext {
+// createTokenUtilsContext creates the context for testing the TokenUtils and reduces code duplication.
+func createTokenUtilsContext(t *testing.T) *tokenUtilsTestContext {
 	t.Helper()
 
 	sut := jwt.CreateTokenUtils(logger.CreateLogger())
 
-	return &jwtTestContext{sut}
+	return &tokenUtilsTestContext{sut}
 }
 
 // TestTokenUtils_GenerateJWT tests generating a new token
