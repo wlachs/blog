@@ -119,4 +119,4 @@ tests. You can follow the current state of test coverage on various software com
 | UserRepository   | 0%           | :x:                |
 | **Utils**        |              |                    |
 | AuthUtils        | 100%         | :white_check_mark: |
-| TokenUtils       | 0%           | :white_check_mark: |
+| TokenUtils       | 100%         | :white_check_mark: |
