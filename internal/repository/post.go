@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
 	"strings"
@@ -75,7 +74,7 @@ func (p postRepository) AddPost(post *types.Post, authorID uint) (*Post, error) 
 		return nil, errortypes.DuplicateElementError{Key: post.URLHandle}
 	} else {
 		log.Debugf("failed to create post: %s, error: %s", post, result.Error)
-		return nil, fmt.Errorf("error creating post with URL handle \"%s\", error: %v", newPost.URLHandle, result.Error)
+		return nil, result.Error
 	}
 }
 
