@@ -9,7 +9,7 @@ import (
 )
 
 // ConnectToMySQL establishes the DB connection
-func ConnectToMySQL() (*gorm.DB, error) {
+func ConnectToMySQL() *gorm.DB {
 	MysqlUser := os.Getenv("MYSQL_USER")
 	MysqlPassword := os.Getenv("MYSQL_PASSWORD")
 	MysqlDatabase := os.Getenv("MYSQL_DATABASE")
@@ -24,5 +24,12 @@ func ConnectToMySQL() (*gorm.DB, error) {
 		MysqlPort,
 		MysqlDatabase,
 	)
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		fmt.Println("failed to establish DB connection")
+		os.Exit(1)
+	}
+
+	return db
 }

@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"fmt"
-	"github.com/wlchs/blog/internal/db"
 	"gorm.io/gorm"
 )
 
@@ -26,12 +24,7 @@ type repository struct {
 
 // CreateRepository established a DB connection and returns the repository.
 // If, for some reason, the DB connection fails, the error is logged and the application terminates.
-func CreateRepository() Repository {
-	database, err := db.ConnectToMySQL()
-	if err != nil {
-		fmt.Printf("failed to establish DB connection: %s", err)
-	}
-
+func CreateRepository(database *gorm.DB) Repository {
 	return &repository{db: database}
 }
 
