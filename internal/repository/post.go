@@ -25,7 +25,7 @@ type Post struct {
 
 // PostRepository interface defining post-related database operations.
 type PostRepository interface {
-	AddPost(post *types.Post, author *User) (*Post, error)
+	AddPost(post *types.Post, authorID uint) (*Post, error)
 	GetPost(urlHandle string) (*Post, error)
 	GetPosts() ([]Post, error)
 }
@@ -54,17 +54,17 @@ func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 }
 
 // AddPost adds a new post with the provided fields to the database.
-// The second User parameter holds information about the author.
-func (p postRepository) AddPost(post *types.Post, author *User) (*Post, error) {
+// The second parameter holds information about the author.
+func (p postRepository) AddPost(post *types.Post, authorID uint) (*Post, error) {
 	log := p.logger
 	repo := p.repository
 
 	newPost := Post{
 		URLHandle: post.URLHandle,
-		Author:    *author,
 		Title:     post.Title,
 		Summary:   post.Summary,
 		Body:      post.Body,
+		AuthorID:  authorID,
 	}
 
 	if result := repo.Create(&newPost); result.Error == nil {

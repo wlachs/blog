@@ -68,7 +68,7 @@ func TestPostService_AddPost(t *testing.T) {
 	}
 
 	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(&userModel, nil)
-	c.mostPostRepository.EXPECT().AddPost(&newPost, &userModel).Return(&postModel, nil)
+	c.mostPostRepository.EXPECT().AddPost(&newPost, userModel.ID).Return(&postModel, nil)
 
 	p, err := c.sut.AddPost(&newPost)
 
@@ -132,7 +132,7 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 	expectedError := errortypes.DuplicateElementError{Key: postModel.URLHandle}
 
 	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(&userModel, nil)
-	c.mostPostRepository.EXPECT().AddPost(&newPost, &userModel).Return(nil, expectedError)
+	c.mostPostRepository.EXPECT().AddPost(&newPost, userModel.ID).Return(nil, expectedError)
 
 	p, err := c.sut.AddPost(&newPost)
 

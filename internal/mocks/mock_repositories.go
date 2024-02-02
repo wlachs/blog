@@ -36,7 +36,7 @@ func (m *MockPostRepository) EXPECT() *MockPostRepositoryMockRecorder {
 }
 
 // AddPost mocks base method.
-func (m *MockPostRepository) AddPost(arg0 *types.Post, arg1 *repository.User) (*repository.Post, error) {
+func (m *MockPostRepository) AddPost(arg0 *types.Post, arg1 uint) (*repository.Post, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPost", arg0, arg1)
 	ret0, _ := ret[0].(*repository.Post)
