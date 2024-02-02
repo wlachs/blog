@@ -39,10 +39,6 @@ func TestPostRepository_AddPost(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	author := &repository.User{
-		UserName: "testUser",
-	}
-
 	inputPost := &types.Post{
 		URLHandle: "testHandle",
 	}
@@ -51,15 +47,13 @@ func TestPostRepository_AddPost(t *testing.T) {
 		URLHandle: inputPost.URLHandle,
 	}
 
-	userQuery := regexp.QuoteMeta("INSERT INTO `users` (`user_name`,`password_hash`,`created_at`,`updated_at`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `id`=`id`")
 	postQuery := regexp.QuoteMeta("INSERT INTO `posts` (`url_handle`,`author_id`,`title`,`summary`,`body`,`created_at`,`updated_at`) VALUES (?,?,?,?,?,?,?)")
 
 	c.mockDb.ExpectBegin()
-	c.mockDb.ExpectExec(userQuery).WillReturnResult(sqlmock.NewResult(0, 0))
 	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 1))
 	c.mockDb.ExpectCommit()
 
-	post, err := c.sut.AddPost(inputPost, author)
+	post, err := c.sut.AddPost(inputPost, 0)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, expectedPost.URLHandle, post.URLHandle, "received post should match the expected one")
@@ -70,10 +64,6 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	author := &repository.User{
-		UserName: "testUser",
-	}
-
 	inputPost := &types.Post{
 		URLHandle: "testHandle",
 	}
@@ -81,15 +71,13 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 	dbErr := fmt.Errorf("1062")
 	expectedError := errortypes.DuplicateElementError{Key: inputPost.URLHandle}
 
-	userQuery := regexp.QuoteMeta("INSERT INTO `users` (`user_name`,`password_hash`,`created_at`,`updated_at`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `id`=`id`")
 	postQuery := regexp.QuoteMeta("INSERT INTO `posts` (`url_handle`,`author_id`,`title`,`summary`,`body`,`created_at`,`updated_at`) VALUES (?,?,?,?,?,?,?)")
 
 	c.mockDb.ExpectBegin()
-	c.mockDb.ExpectExec(userQuery).WillReturnResult(sqlmock.NewResult(0, 0))
 	c.mockDb.ExpectExec(postQuery).WillReturnError(dbErr)
 	c.mockDb.ExpectRollback()
 
-	post, err := c.sut.AddPost(inputPost, author)
+	post, err := c.sut.AddPost(inputPost, 0)
 
 	assert.Nil(t, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
@@ -100,25 +88,19 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	author := &repository.User{
-		UserName: "testUser",
-	}
-
 	inputPost := &types.Post{
 		URLHandle: "testHandle",
 	}
 
 	expectedError := fmt.Errorf("unexpected error")
 
-	userQuery := regexp.QuoteMeta("INSERT INTO `users` (`user_name`,`password_hash`,`created_at`,`updated_at`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `id`=`id`")
 	postQuery := regexp.QuoteMeta("INSERT INTO `posts` (`url_handle`,`author_id`,`title`,`summary`,`body`,`created_at`,`updated_at`) VALUES (?,?,?,?,?,?,?)")
 
 	c.mockDb.ExpectBegin()
-	c.mockDb.ExpectExec(userQuery).WillReturnResult(sqlmock.NewResult(0, 0))
 	c.mockDb.ExpectExec(postQuery).WillReturnError(expectedError)
 	c.mockDb.ExpectRollback()
 
-	post, err := c.sut.AddPost(inputPost, author)
+	post, err := c.sut.AddPost(inputPost, 0)
 
 	assert.Nil(t, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
