@@ -38,7 +38,7 @@ func (p postService) AddPost(newPost *types.Post) (types.Post, error) {
 
 	log.Infof("adding new post %v with author %s", newPost, newPost.Author)
 
-	post, err := postRepository.AddPost(newPost, author)
+	post, err := postRepository.AddPost(newPost, author.ID)
 	return mapPost(post), err
 }
 
