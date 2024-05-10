@@ -88,7 +88,7 @@ func TestUserRepository_GetUser(t *testing.T) {
 		UserName: "testUser",
 	}
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 
 	c.mockDb.ExpectQuery(query).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "user_name"}).
@@ -109,7 +109,7 @@ func TestUserRepository_GetUser_Record_Not_Found(t *testing.T) {
 		UserName: "testUser",
 	}
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 	dbErr := fmt.Errorf("record not found")
 	expectedError := errortypes.UserNotFoundError{User: expectedUser}
 
@@ -126,7 +126,7 @@ func TestUserRepository_GetUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 	expectedError := fmt.Errorf("unexpected error")
 
 	c.mockDb.ExpectQuery(query).WillReturnError(expectedError)

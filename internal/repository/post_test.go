@@ -115,7 +115,7 @@ func TestPostRepository_GetPost(t *testing.T) {
 		URLHandle: "testHandle",
 	}
 
-	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
 
 	c.mockDb.ExpectQuery(query).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "url_handle"}).
@@ -136,7 +136,7 @@ func TestPostRepository_GetPost_Record_Not_Found(t *testing.T) {
 		URLHandle: "testHandle",
 	}
 
-	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
 	dbErr := fmt.Errorf("record not found")
 	expectedError := errortypes.PostNotFoundError{Post: expectedPost}
 
@@ -153,7 +153,7 @@ func TestPostRepository_GetPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
 	expectedError := fmt.Errorf("unexpected error")
 
 	c.mockDb.ExpectQuery(query).WillReturnError(expectedError)
