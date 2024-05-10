@@ -7,7 +7,7 @@ package mocks
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockTokenUtils is a mock of TokenUtils interface.
@@ -34,31 +34,31 @@ func (m *MockTokenUtils) EXPECT() *MockTokenUtilsMockRecorder {
 }
 
 // GenerateJWT mocks base method.
-func (m *MockTokenUtils) GenerateJWT(arg0 string) (string, error) {
+func (m *MockTokenUtils) GenerateJWT(userName string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateJWT", arg0)
+	ret := m.ctrl.Call(m, "GenerateJWT", userName)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateJWT indicates an expected call of GenerateJWT.
-func (mr *MockTokenUtilsMockRecorder) GenerateJWT(arg0 interface{}) *gomock.Call {
+func (mr *MockTokenUtilsMockRecorder) GenerateJWT(userName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateJWT", reflect.TypeOf((*MockTokenUtils)(nil).GenerateJWT), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateJWT", reflect.TypeOf((*MockTokenUtils)(nil).GenerateJWT), userName)
 }
 
 // ParseJWT mocks base method.
-func (m *MockTokenUtils) ParseJWT(arg0 string) (string, error) {
+func (m *MockTokenUtils) ParseJWT(t string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ParseJWT", arg0)
+	ret := m.ctrl.Call(m, "ParseJWT", t)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ParseJWT indicates an expected call of ParseJWT.
-func (mr *MockTokenUtilsMockRecorder) ParseJWT(arg0 interface{}) *gomock.Call {
+func (mr *MockTokenUtilsMockRecorder) ParseJWT(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseJWT", reflect.TypeOf((*MockTokenUtils)(nil).ParseJWT), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseJWT", reflect.TypeOf((*MockTokenUtils)(nil).ParseJWT), t)
 }

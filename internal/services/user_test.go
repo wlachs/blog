@@ -3,7 +3,6 @@ package services_test
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/errortypes"
@@ -12,6 +11,7 @@ import (
 	"github.com/wlchs/blog/internal/repository"
 	"github.com/wlchs/blog/internal/services"
 	"github.com/wlchs/blog/internal/types"
+	"go.uber.org/mock/gomock"
 	"testing"
 )
 

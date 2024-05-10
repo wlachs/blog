@@ -3,7 +3,6 @@ package controller_test
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/wlchs/blog/internal/container"
 	"github.com/wlchs/blog/internal/controller"
@@ -12,6 +11,7 @@ import (
 	"github.com/wlchs/blog/internal/mocks"
 	"github.com/wlchs/blog/internal/test"
 	"github.com/wlchs/blog/internal/types"
+	"go.uber.org/mock/gomock"
 	"net/http/httptest"
 	"testing"
 )
