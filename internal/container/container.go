@@ -1,8 +1,8 @@
 package container
 
 import (
-	"github.com/wlchs/blog/internal/jwt"
-	"github.com/wlchs/blog/internal/repository"
+	"github.com/wlachs/blog/internal/jwt"
+	"github.com/wlachs/blog/internal/repository"
 	"go.uber.org/zap"
 )
 

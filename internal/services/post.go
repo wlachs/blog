@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/repository"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/repository"
+	"github.com/wlachs/blog/internal/types"
 )
 
 // PostService interface. Defines post-related business logic.

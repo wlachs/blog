@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/wlchs/blog/internal/errortypes"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/zap"
 	"time"
 )

@@ -1,4 +1,4 @@
-module github.com/wlchs/blog
+module github.com/wlachs/blog
 
 go 1.21
 

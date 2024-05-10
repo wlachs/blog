@@ -2,7 +2,7 @@ package errortypes
 
 import (
 	"fmt"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/internal/types"
 )
 
 type IncorrectUsernameOrPasswordError struct{}

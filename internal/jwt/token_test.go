@@ -2,8 +2,8 @@ package jwt_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/wlchs/blog/internal/jwt"
-	"github.com/wlchs/blog/internal/logger"
+	"github.com/wlachs/blog/internal/jwt"
+	"github.com/wlachs/blog/internal/logger"
 	"testing"
 )
 

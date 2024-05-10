@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/errortypes"
-	"github.com/wlchs/blog/internal/services"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/services"
+	"github.com/wlachs/blog/internal/types"
 	"net/http"
 )
 
