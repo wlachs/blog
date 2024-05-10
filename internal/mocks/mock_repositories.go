@@ -7,9 +7,9 @@ package mocks
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	repository "github.com/wlchs/blog/internal/repository"
 	types "github.com/wlchs/blog/internal/types"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockPostRepository is a mock of PostRepository interface.
@@ -36,33 +36,33 @@ func (m *MockPostRepository) EXPECT() *MockPostRepositoryMockRecorder {
 }
 
 // AddPost mocks base method.
-func (m *MockPostRepository) AddPost(arg0 *types.Post, arg1 uint) (*repository.Post, error) {
+func (m *MockPostRepository) AddPost(post *types.Post, authorID uint) (*repository.Post, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPost", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddPost", post, authorID)
 	ret0, _ := ret[0].(*repository.Post)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddPost indicates an expected call of AddPost.
-func (mr *MockPostRepositoryMockRecorder) AddPost(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockPostRepositoryMockRecorder) AddPost(post, authorID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPost", reflect.TypeOf((*MockPostRepository)(nil).AddPost), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPost", reflect.TypeOf((*MockPostRepository)(nil).AddPost), post, authorID)
 }
 
 // GetPost mocks base method.
-func (m *MockPostRepository) GetPost(arg0 string) (*repository.Post, error) {
+func (m *MockPostRepository) GetPost(urlHandle string) (*repository.Post, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPost", arg0)
+	ret := m.ctrl.Call(m, "GetPost", urlHandle)
 	ret0, _ := ret[0].(*repository.Post)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPost indicates an expected call of GetPost.
-func (mr *MockPostRepositoryMockRecorder) GetPost(arg0 interface{}) *gomock.Call {
+func (mr *MockPostRepositoryMockRecorder) GetPost(urlHandle any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPost", reflect.TypeOf((*MockPostRepository)(nil).GetPost), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPost", reflect.TypeOf((*MockPostRepository)(nil).GetPost), urlHandle)
 }
 
 // GetPosts mocks base method.
@@ -104,33 +104,33 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // AddUser mocks base method.
-func (m *MockUserRepository) AddUser(arg0 *types.User) (*repository.User, error) {
+func (m *MockUserRepository) AddUser(user *types.User) (*repository.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUser", arg0)
+	ret := m.ctrl.Call(m, "AddUser", user)
 	ret0, _ := ret[0].(*repository.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddUser indicates an expected call of AddUser.
-func (mr *MockUserRepositoryMockRecorder) AddUser(arg0 interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) AddUser(user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockUserRepository)(nil).AddUser), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockUserRepository)(nil).AddUser), user)
 }
 
 // GetUser mocks base method.
-func (m *MockUserRepository) GetUser(arg0 string) (*repository.User, error) {
+func (m *MockUserRepository) GetUser(userName string) (*repository.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", arg0)
+	ret := m.ctrl.Call(m, "GetUser", userName)
 	ret0, _ := ret[0].(*repository.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUser indicates an expected call of GetUser.
-func (mr *MockUserRepositoryMockRecorder) GetUser(arg0 interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) GetUser(userName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUserRepository)(nil).GetUser), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUserRepository)(nil).GetUser), userName)
 }
 
 // GetUsers mocks base method.
@@ -149,16 +149,16 @@ func (mr *MockUserRepositoryMockRecorder) GetUsers() *gomock.Call {
 }
 
 // UpdateUser mocks base method.
-func (m *MockUserRepository) UpdateUser(arg0 *types.User) (*repository.User, error) {
+func (m *MockUserRepository) UpdateUser(user *types.User) (*repository.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", arg0)
+	ret := m.ctrl.Call(m, "UpdateUser", user)
 	ret0, _ := ret[0].(*repository.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockUserRepositoryMockRecorder) UpdateUser(arg0 interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) UpdateUser(user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserRepository)(nil).UpdateUser), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserRepository)(nil).UpdateUser), user)
 }

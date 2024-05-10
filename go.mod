@@ -5,8 +5,8 @@ go 1.21
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.4
+	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.18.0
 	gorm.io/gorm v1.25.6
@@ -18,6 +18,9 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )
 
 require (
