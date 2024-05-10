@@ -23,3 +23,6 @@ go.work
 # IDE
 *.iml
 .idea
+
+# Generated sources
+internal/mocks

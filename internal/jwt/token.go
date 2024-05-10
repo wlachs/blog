@@ -1,5 +1,7 @@
 package jwt
 
+//go:generate mockgen-v0.4.0 -source=token.go -destination=../mocks/mock_jwt.go -package=mocks
+
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt"

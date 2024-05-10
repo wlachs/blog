@@ -1,5 +1,7 @@
 package repository
 
+//go:generate mockgen-v0.4.0 -source=user.go -destination=../mocks/mock_user_repository.go -package=mocks
+
 import (
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/types"

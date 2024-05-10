@@ -1,5 +1,7 @@
 package services
 
+//go:generate mockgen-v0.4.0 -source=post.go -destination=../mocks/mock_post_service.go -package=mocks
+
 import (
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/repository"
