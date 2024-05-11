@@ -10,6 +10,10 @@ jobs:
       - checkout
       - go/load-cache
       - go/mod-download
+      - run:
+          name: Generate mocks
+          command: |
+            go generate ./...
       - go/save-cache
       - go/test:
           covermode: 'atomic'

@@ -26,3 +26,4 @@ go.work
 
 # Generated sources
 internal/mocks
+api/types
