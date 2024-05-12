@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/wlachs/blog/api/types"
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/controller"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/mocks"
 	"github.com/wlachs/blog/internal/test"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/mock/gomock"
 	"net/http/httptest"
 	"testing"
@@ -44,17 +44,17 @@ func TestAuthController_Login(t *testing.T) {
 	t.Parallel()
 	c := createAuthControllerContext(t)
 
-	input := types.UserLoginInput{
-		UserName: "TestUser",
+	input := types.DoLoginJSONBody{
+		UserID:   "TestUser",
 		Password: "TestPW1234$",
 	}
 
 	test.MockJsonPost(c.ctx, map[string]interface{}{
-		"userName": input.UserName,
+		"userID":   input.UserID,
 		"password": input.Password,
 	})
 
-	c.mockUserService.EXPECT().AuthenticateUser(&input).Return("token", nil)
+	c.mockUserService.EXPECT().AuthenticateUser(input.UserID, input.Password).Return("token", nil)
 
 	c.sut.Login(c.ctx)
 	assert.Nil(t, c.ctx.Errors, "should complete without errors")
@@ -67,18 +67,18 @@ func TestAuthController_Login_Incorrect_Password(t *testing.T) {
 	t.Parallel()
 	c := createAuthControllerContext(t)
 
-	input := types.UserLoginInput{
-		UserName: "TestUser",
+	input := types.DoLoginJSONBody{
+		UserID:   "TestUser",
 		Password: "TestPW1234$",
 	}
 
 	test.MockJsonPost(c.ctx, map[string]interface{}{
-		"userName": input.UserName,
+		"userID":   input.UserID,
 		"password": input.Password,
 	})
 
 	expectedError := errortypes.IncorrectUsernameOrPasswordError{}
-	c.mockUserService.EXPECT().AuthenticateUser(&input).Return("", expectedError)
+	c.mockUserService.EXPECT().AuthenticateUser(input.UserID, input.Password).Return("", expectedError)
 
 	c.sut.Login(c.ctx)
 
@@ -111,7 +111,7 @@ func TestAuthController_Protect(t *testing.T) {
 	c.sut.Protect(c.ctx)
 
 	assert.Nil(t, c.ctx.Errors, "expected no errors")
-	assert.Equal(t, "test user", c.ctx.GetString("user"), "incorrect user")
+	assert.Equal(t, "test user", c.ctx.GetString("UserID"), "incorrect user")
 	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
 }
 

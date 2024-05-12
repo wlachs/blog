@@ -2,7 +2,6 @@ package errortypes
 
 import (
 	"fmt"
-	"github.com/wlachs/blog/internal/types"
 )
 
 type IncorrectUsernameOrPasswordError struct{}
@@ -31,20 +30,20 @@ func (i MissingUsernameError) Error() string {
 }
 
 type UserNotFoundError struct {
-	User types.User
+	UserName string
 }
 
 func (e UserNotFoundError) Error() string {
-	return fmt.Sprintf("user \"%s\" not found", e.User.UserName)
+	return fmt.Sprintf("user \"%s\" not found", e.UserName)
 }
 
 type UnexpectedUserError struct {
-	User types.User
+	UserName string
 }
 
 func (e UnexpectedUserError) Error() string {
-	if e.User.UserName != "" {
-		return fmt.Sprintf("unexpected error encountered with user \"%s\"", e.User.UserName)
+	if e.UserName != "" {
+		return fmt.Sprintf("unexpected error encountered with user \"%s\"", e.UserName)
 	}
 	return "unexpected user error encountered"
 }

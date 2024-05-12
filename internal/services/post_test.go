@@ -9,7 +9,6 @@ import (
 	"github.com/wlachs/blog/internal/mocks"
 	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/services"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/mock/gomock"
 	"testing"
 	"time"
@@ -58,22 +57,20 @@ func TestPostService_AddPost(t *testing.T) {
 		UpdatedAt: time.Time{}.Local(),
 	}
 
-	newPost := types.Post{
-		URLHandle:    postModel.URLHandle,
-		Title:        postModel.Title,
-		Author:       userModel.UserName,
-		Summary:      postModel.Summary,
-		Body:         postModel.Body,
-		CreationTime: postModel.CreatedAt,
+	newPost := repository.Post{
+		URLHandle: postModel.URLHandle,
+		Title:     postModel.Title,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
 	}
 
-	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(&userModel, nil)
-	c.mostPostRepository.EXPECT().AddPost(&newPost, userModel.ID).Return(&postModel, nil)
+	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(userModel, nil)
+	c.mostPostRepository.EXPECT().AddPost(newPost, userModel.ID).Return(postModel, nil)
 
-	p, err := c.sut.AddPost(&newPost)
+	p, err := c.sut.AddPost(newPost, userModel.UserName)
 
 	assert.Nil(t, err, "should complete without error")
-	assert.Equal(t, newPost, p, "added post doesn't match the input")
+	assert.Equal(t, postModel, p, "added post doesn't match the input")
 }
 
 // TestPostService_AddPost_Invalid_User tests adding a new post to the blog with invalid username.
@@ -81,17 +78,16 @@ func TestPostService_AddPost_Invalid_User(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
-	newPost := types.Post{
+	newPost := repository.Post{
 		URLHandle: "testUrlHandle",
 		Title:     "testTitle",
-		Author:    "testAuthor",
 		Summary:   "testSummary",
 		Body:      "testBody",
 	}
 
-	c.mostUserRepository.EXPECT().GetUser("testAuthor").Return(nil, fmt.Errorf("error"))
+	c.mostUserRepository.EXPECT().GetUser("testAuthor").Return(repository.User{}, fmt.Errorf("error"))
 
-	p, err := c.sut.AddPost(&newPost)
+	p, err := c.sut.AddPost(newPost, "testAuthor")
 
 	assert.NotNil(t, err, "expected error")
 	assert.NotEqual(t, newPost, p, "added user with incorrect data")
@@ -107,7 +103,6 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 		UserName: "testAuthor",
 		Posts:    []repository.Post{},
 	}
-
 	postModel := repository.Post{
 		ID:        0,
 		URLHandle: "duplicateUrlHandle",
@@ -119,22 +114,19 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 		CreatedAt: time.Time{}.Local(),
 		UpdatedAt: time.Time{}.Local(),
 	}
-
-	newPost := types.Post{
-		URLHandle:    postModel.URLHandle,
-		Title:        postModel.Title,
-		Author:       userModel.UserName,
-		Summary:      postModel.Summary,
-		Body:         postModel.Body,
-		CreationTime: postModel.CreatedAt,
+	newPost := repository.Post{
+		URLHandle: postModel.URLHandle,
+		Title:     postModel.Title,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
 	}
 
 	expectedError := errortypes.DuplicateElementError{Key: postModel.URLHandle}
 
-	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(&userModel, nil)
-	c.mostPostRepository.EXPECT().AddPost(&newPost, userModel.ID).Return(nil, expectedError)
+	c.mostUserRepository.EXPECT().GetUser(userModel.UserName).Return(userModel, nil)
+	c.mostPostRepository.EXPECT().AddPost(newPost, userModel.ID).Return(repository.Post{}, expectedError)
 
-	p, err := c.sut.AddPost(&newPost)
+	p, err := c.sut.AddPost(newPost, userModel.UserName)
 
 	assert.Equal(t, expectedError, err, "error doesn't match expected one")
 	assert.NotEqual(t, newPost, p, "added user with incorrect data")
@@ -163,16 +155,17 @@ func TestPostService_GetPost(t *testing.T) {
 		UpdatedAt: time.Time{}.Local(),
 	}
 
-	post := types.Post{
-		URLHandle:    postModel.URLHandle,
-		Title:        postModel.Title,
-		Author:       userModel.UserName,
-		Summary:      postModel.Summary,
-		Body:         postModel.Body,
-		CreationTime: postModel.CreatedAt,
+	post := repository.Post{
+		URLHandle: postModel.URLHandle,
+		Title:     postModel.Title,
+		Author:    userModel,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
+		CreatedAt: postModel.CreatedAt,
+		UpdatedAt: postModel.UpdatedAt,
 	}
 
-	c.mostPostRepository.EXPECT().GetPost(postModel.URLHandle).Return(&postModel, nil)
+	c.mostPostRepository.EXPECT().GetPost(postModel.URLHandle).Return(postModel, nil)
 
 	p, err := c.sut.GetPost(postModel.URLHandle)
 
@@ -185,7 +178,7 @@ func TestPostService_GetPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
-	c.mostPostRepository.EXPECT().GetPost("testUrlHandle").Return(nil, fmt.Errorf("error"))
+	c.mostPostRepository.EXPECT().GetPost("testUrlHandle").Return(repository.Post{}, fmt.Errorf("error"))
 	_, err := c.sut.GetPost("testUrlHandle")
 
 	assert.NotNil(t, err, "expected error")
@@ -216,13 +209,15 @@ func TestPostService_GetPosts(t *testing.T) {
 		},
 	}
 
-	posts := []types.Post{
+	posts := []repository.Post{
 		{
-			URLHandle:    postModels[0].URLHandle,
-			Title:        postModels[0].Title,
-			Author:       userModel.UserName,
-			Summary:      postModels[0].Summary,
-			CreationTime: postModels[0].CreatedAt,
+			URLHandle: postModels[0].URLHandle,
+			Title:     postModels[0].Title,
+			Author:    userModel,
+			Summary:   postModels[0].Summary,
+			CreatedAt: postModels[0].CreatedAt,
+			UpdatedAt: postModels[0].UpdatedAt,
+			Body:      postModels[0].Body,
 		},
 	}
 

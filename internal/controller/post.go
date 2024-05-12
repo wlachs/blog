@@ -2,10 +2,11 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wlachs/blog/api/types"
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/services"
-	"github.com/wlachs/blog/internal/types"
 	"net/http"
 )
 
@@ -31,24 +32,38 @@ func CreatePostController(cont container.Container, postService services.PostSer
 func (controller postController) AddPost(c *gin.Context) {
 	postService := controller.postService
 
-	var body types.Post
+	var body types.NewPost
 	if err := c.BindJSON(&body); err != nil {
 		return
 	}
 
-	// Set author from context
-	body.Author = c.GetString("user")
-	post, err := postService.AddPost(&body)
+	// Set author and post ID from context
+	author := c.GetString("UserID")
+	postID, _ := c.Params.Get("PostID")
+
+	// Create new raw post item
+	newPost := repository.Post{
+		URLHandle: postID,
+	}
+	if body.Title != nil {
+		newPost.Title = *body.Title
+	}
+	if body.Summary != nil {
+		newPost.Summary = *body.Summary
+	}
+	if body.Body != nil {
+		newPost.Body = *body.Body
+	}
+
+	post, err := postService.AddPost(newPost, author)
 
 	switch err.(type) {
 	case nil:
-		c.IndentedJSON(http.StatusCreated, post)
-
+		c.IndentedJSON(http.StatusCreated, populatePost(post))
 	case errortypes.DuplicateElementError:
 		_ = c.AbortWithError(http.StatusConflict, err)
-
 	default:
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{Post: body})
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{URLHandle: postID})
 	}
 }
 
@@ -56,7 +71,7 @@ func (controller postController) AddPost(c *gin.Context) {
 func (controller postController) GetPost(c *gin.Context) {
 	postService := controller.postService
 
-	id, found := c.Params.Get("id")
+	id, found := c.Params.Get("PostID")
 	if !found {
 		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUrlHandleError{})
 		return
@@ -66,13 +81,11 @@ func (controller postController) GetPost(c *gin.Context) {
 
 	switch err.(type) {
 	case nil:
-		c.IndentedJSON(http.StatusOK, post)
-
+		c.IndentedJSON(http.StatusOK, populatePost(post))
 	case errortypes.PostNotFoundError:
 		_ = c.AbortWithError(http.StatusNotFound, err)
-
 	default:
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{Post: types.Post{URLHandle: id}})
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{URLHandle: id})
 	}
 }
 
@@ -86,5 +99,51 @@ func (controller postController) GetPosts(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, posts)
+	c.IndentedJSON(http.StatusOK, populatePostMetadataSlice(posts))
+}
+
+// populatePost maps a repository.Post model to types.Post
+func populatePost(post repository.Post) types.Post {
+	p := types.Post{
+		Author:       post.Author.UserName,
+		CreationTime: post.CreatedAt,
+		Id:           post.URLHandle,
+		Title:        post.Title,
+	}
+
+	if len(post.Summary) > 0 {
+		p.Summary = &post.Summary
+	}
+	if len(post.Body) > 0 {
+		p.Body = &post.Body
+	}
+
+	return p
+}
+
+// populatePostMetadata maps a repository.Post model to types.PostMetadata
+func populatePostMetadata(post repository.Post) types.PostMetadata {
+	p := types.PostMetadata{
+		Author:       post.Author.UserName,
+		CreationTime: post.CreatedAt,
+		Id:           post.URLHandle,
+		Title:        post.Title,
+	}
+
+	if len(post.Summary) > 0 {
+		p.Summary = &post.Summary
+	}
+
+	return p
+}
+
+// populatePostMetadataSlice maps a slice of repository.Post models to a types.PostMetadata slice
+func populatePostMetadataSlice(posts []repository.Post) []types.PostMetadata {
+	p := make([]types.PostMetadata, 0, len(posts))
+
+	for _, post := range posts {
+		p = append(p, populatePostMetadata(post))
+	}
+
+	return p
 }

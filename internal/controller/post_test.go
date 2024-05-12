@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/wlachs/blog/api/types"
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/controller"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/mocks"
+	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/test"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/mock/gomock"
 	"net/http/httptest"
 	"testing"
@@ -43,18 +44,29 @@ func TestPostController_AddPost(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
+	author := "testAuthor"
+	summary := "testSummary"
+	body := "testBody"
+
 	input := types.Post{
-		URLHandle: "testUrlHandle",
-		Title:     "testTitle",
-		Author:    "testAuthor",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Id:      "testUrlHandle",
+		Title:   "testTitle",
+		Summary: &summary,
+		Body:    &body,
+	}
+
+	postModel := repository.Post{
+		URLHandle: input.Id,
+		Title:     input.Title,
+		Summary:   *input.Summary,
+		Body:      *input.Body,
 	}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("user", input.Author)
-	c.mockPostService.EXPECT().AddPost(&input).Return(input, nil)
+	c.ctx.Set("UserID", author)
+	c.ctx.AddParam("PostID", input.Id)
+	c.mockPostService.EXPECT().AddPost(postModel, author).Return(postModel, nil)
 
 	c.sut.AddPost(c.ctx)
 
@@ -85,19 +97,25 @@ func TestPostController_AddPost_Duplicate_Input(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
-	input := types.Post{
+	author := "testAuthor"
+	postModel := repository.Post{
 		URLHandle: "duplicateUrlHandle",
 		Title:     "testTitle",
-		Author:    "testAuthor",
 		Summary:   "testSummary",
 		Body:      "testBody",
+	}
+	input := types.NewPost{
+		Title:   &postModel.Title,
+		Summary: &postModel.Summary,
+		Body:    &postModel.Body,
 	}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("user", input.Author)
+	c.ctx.Set("UserID", author)
+	c.ctx.AddParam("PostID", postModel.URLHandle)
 	expectedError := errortypes.DuplicateElementError{}
-	c.mockPostService.EXPECT().AddPost(&input).Return(types.Post{}, expectedError)
+	c.mockPostService.EXPECT().AddPost(postModel, author).Return(repository.Post{}, expectedError)
 
 	c.sut.AddPost(c.ctx)
 
@@ -112,19 +130,34 @@ func TestPostController_AddPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
-	input := types.Post{
+	userModel := repository.User{
+		UserName: "testAuthor",
+	}
+	postModel := repository.Post{
 		URLHandle: "testUrlHandle",
 		Title:     "testTitle",
-		Author:    "testAuthor",
+		Author:    userModel,
 		Summary:   "testSummary",
 		Body:      "testBody",
+	}
+	inputModel := repository.Post{
+		URLHandle: postModel.URLHandle,
+		Title:     postModel.Title,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
+	}
+	input := types.NewPost{
+		Body:    &postModel.Body,
+		Summary: &postModel.Summary,
+		Title:   &postModel.Title,
 	}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("user", input.Author)
-	expectedError := errortypes.UnexpectedPostError{Post: input}
-	c.mockPostService.EXPECT().AddPost(&input).Return(types.Post{}, fmt.Errorf("unexpected internal error"))
+	c.ctx.Set("UserID", postModel.Author.UserName)
+	c.ctx.AddParam("PostID", postModel.URLHandle)
+	expectedError := errortypes.UnexpectedPostError{URLHandle: postModel.URLHandle}
+	c.mockPostService.EXPECT().AddPost(inputModel, userModel.UserName).Return(repository.Post{}, fmt.Errorf("unexpected internal error"))
 
 	c.sut.AddPost(c.ctx)
 
@@ -139,16 +172,26 @@ func TestPostController_GetPost(t *testing.T) {
 	t.Parallel()
 
 	c := createPostControllerContext(t)
-	expectedOutput := types.Post{
+	userModel := repository.User{
+		UserName: "testAuthor",
+	}
+	postModel := repository.Post{
 		URLHandle: "testUrlHandle",
 		Title:     "testTitle",
-		Author:    "testAuthor",
+		Author:    userModel,
 		Summary:   "testSummary",
 		Body:      "testBody",
 	}
+	expectedOutput := types.Post{
+		Author:  postModel.Author.UserName,
+		Body:    &postModel.Body,
+		Id:      postModel.URLHandle,
+		Summary: &postModel.Summary,
+		Title:   postModel.Title,
+	}
 
-	c.ctx.AddParam("id", expectedOutput.URLHandle)
-	c.mockPostService.EXPECT().GetPost(expectedOutput.URLHandle).Return(expectedOutput, nil)
+	c.ctx.AddParam("PostID", postModel.URLHandle)
+	c.mockPostService.EXPECT().GetPost(postModel.URLHandle).Return(postModel, nil)
 
 	c.sut.GetPost(c.ctx)
 
@@ -181,10 +224,10 @@ func TestPostController_GetPost_Incorrect_URL_Handle(t *testing.T) {
 
 	c := createPostControllerContext(t)
 	urlHandle := "testUrlHandle"
-	expectedError := errortypes.PostNotFoundError{Post: types.Post{URLHandle: urlHandle}}
+	expectedError := errortypes.PostNotFoundError{URLHandle: urlHandle}
 
-	c.ctx.AddParam("id", urlHandle)
-	c.mockPostService.EXPECT().GetPost(urlHandle).Return(types.Post{}, expectedError)
+	c.ctx.AddParam("PostID", urlHandle)
+	c.mockPostService.EXPECT().GetPost(urlHandle).Return(repository.Post{}, expectedError)
 
 	c.sut.GetPost(c.ctx)
 
@@ -200,10 +243,10 @@ func TestPostController_GetPost_Unexpected_Error(t *testing.T) {
 
 	c := createPostControllerContext(t)
 	urlHandle := "testUrlHandle"
-	expectedError := errortypes.UnexpectedPostError{Post: types.Post{URLHandle: urlHandle}}
+	expectedError := errortypes.UnexpectedPostError{URLHandle: urlHandle}
 
-	c.ctx.AddParam("id", urlHandle)
-	c.mockPostService.EXPECT().GetPost(urlHandle).Return(types.Post{}, fmt.Errorf("unexpected error"))
+	c.ctx.AddParam("PostID", urlHandle)
+	c.mockPostService.EXPECT().GetPost(urlHandle).Return(repository.Post{}, fmt.Errorf("unexpected error"))
 
 	c.sut.GetPost(c.ctx)
 
@@ -218,21 +261,37 @@ func TestPostController_GetPosts(t *testing.T) {
 	t.Parallel()
 
 	c := createPostControllerContext(t)
-	expectedOutput := []types.Post{
+	urlHandle := "testUrlHandle"
+	title := "testTitle"
+	summary := "testSummary"
+
+	userModel := repository.User{
+		UserName: "testAuthor",
+	}
+
+	postModels := []repository.Post{
 		{
-			URLHandle: "testUrlHandle",
-			Title:     "testTitle",
-			Author:    "testAuthor",
-			Summary:   "testSummary",
-			Body:      "testBody",
+			URLHandle: urlHandle,
+			Title:     title,
+			Author:    userModel,
+			Summary:   summary,
 		},
 	}
 
-	c.mockPostService.EXPECT().GetPosts().Return(expectedOutput, nil)
+	expectedOutput := []types.PostMetadata{
+		{
+			Id:      urlHandle,
+			Title:   title,
+			Author:  userModel.UserName,
+			Summary: &summary,
+		},
+	}
+
+	c.mockPostService.EXPECT().GetPosts().Return(postModels, nil)
 
 	c.sut.GetPosts(c.ctx)
 
-	var output []types.Post
+	var output []types.PostMetadata
 	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
 
 	assert.Nil(t, c.ctx.Errors, "expected no errors")

@@ -7,19 +7,18 @@ import (
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/repository"
-	"github.com/wlachs/blog/internal/types"
 	"os"
 )
 
 // UserService interface. Defines user-related business logic.
 type UserService interface {
-	AuthenticateUser(user *types.UserLoginInput) (string, error)
-	CheckUserPassword(user *types.UserLoginInput) bool
-	GetUser(userName string) (types.User, error)
-	GetUsers() ([]types.User, error)
+	AuthenticateUser(userID string, password string) (string, error)
+	CheckUserPassword(userID string, password string) bool
+	GetUser(userName string) (repository.User, error)
+	GetUsers() ([]repository.User, error)
 	RegisterFirstUser() error
-	RegisterUser(user *types.UserLoginInput) (types.User, error)
-	UpdateUser(oldUser *types.UserLoginInput, newUser *types.UserLoginInput) (types.User, error)
+	RegisterUser(userID string, password string) (repository.User, error)
+	UpdateUser(userID string, oldPassword string, newPassword string) (repository.User, error)
 }
 
 // userService is the concrete implementation of the UserService interface.
@@ -50,45 +49,43 @@ func initUserService(service *userService) {
 
 // AuthenticateUser authenticates the user.
 // If the password hash matches the one stored in the database, a JWT is generated.
-func (u userService) AuthenticateUser(user *types.UserLoginInput) (string, error) {
+func (u userService) AuthenticateUser(userID string, password string) (string, error) {
 	log := u.cont.GetLogger()
 	jwtUtils := u.cont.GetJWTUtils()
 
-	if !u.CheckUserPassword(user) {
-		log.Debugf("the provided password hash for user \"%s\" doesn't match the one stored in the DB", user.UserName)
+	if !u.CheckUserPassword(userID, password) {
+		log.Debugf("the provided password hash for user \"%s\" doesn't match the one stored in the DB", userID)
 		return "", errortypes.IncorrectUsernameOrPasswordError{}
 	}
 
-	log.Debugf("authentication complete for user: %s", user.UserName)
-	return jwtUtils.GenerateJWT(user.UserName)
+	log.Debugf("authentication complete for user: %s", userID)
+	return jwtUtils.GenerateJWT(userID)
 }
 
 // CheckUserPassword fetches the user's password hash from the database and compares it to the input.
-func (u userService) CheckUserPassword(user *types.UserLoginInput) bool {
+func (u userService) CheckUserPassword(userID string, password string) bool {
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
-	userModel, err := userRepository.GetUser(user.UserName)
+	userModel, err := userRepository.GetUser(userID)
 	if err != nil {
-		log.Errorf("failed to get user %s from DB: %v", user.UserName, err)
+		log.Errorf("failed to get user %s from DB: %v", userID, err)
 		return false
 	}
 
-	return auth.CompareStringWithHash(user.Password, userModel.PasswordHash)
+	return auth.CompareStringWithHash(password, userModel.PasswordHash)
 }
 
 // GetUser retrieves a user by userName and creates a user data object.
-func (u userService) GetUser(userName string) (types.User, error) {
+func (u userService) GetUser(userID string) (repository.User, error) {
 	userRepository := u.cont.GetUserRepository()
-	user, err := userRepository.GetUser(userName)
-	return mapUser(user), err
+	return userRepository.GetUser(userID)
 }
 
 // GetUsers retrieves every user and maps them to a slice of user data objects.
-func (u userService) GetUsers() ([]types.User, error) {
+func (u userService) GetUsers() ([]repository.User, error) {
 	userRepository := u.cont.GetUserRepository()
-	users, err := userRepository.GetUsers()
-	return mapUsers(users), err
+	return userRepository.GetUsers()
 }
 
 // RegisterFirstUser creates the main user if it doesn't exist yet.
@@ -109,90 +106,58 @@ func (u userService) RegisterFirstUser() error {
 		return nil
 	}
 
-	user := types.UserLoginInput{
-		UserName: defaultUser,
-		Password: defaultPassword,
-	}
-
 	log.Infof("initializing first user with name %s", defaultUser)
-	_, err := u.RegisterUser(&user)
+	_, err := u.RegisterUser(defaultUser, defaultPassword)
 	return err
 }
 
 // RegisterUser creates a new user with the provided username and password.
-func (u userService) RegisterUser(user *types.UserLoginInput) (types.User, error) {
+func (u userService) RegisterUser(userID string, password string) (repository.User, error) {
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
-	hash, err := auth.HashString(user.Password)
+	hash, err := auth.HashString(password)
 	if err != nil {
 		log.Errorf("failed to calculate password hash: %v", err)
-		return types.User{}, errortypes.PasswordHashingError{}
+		return repository.User{}, errortypes.PasswordHashingError{}
 	}
 
-	newUser := types.User{
-		UserName:     user.UserName,
+	newUser := repository.User{
+		UserName:     userID,
 		PasswordHash: hash,
 	}
 
-	addedUser, err := userRepository.AddUser(&newUser)
-	return mapUser(addedUser), err
+	return userRepository.AddUser(newUser)
 }
 
 // UpdateUser receives two user input objects, one with the user's current password, and one with the new attributes.
 // If the old password matches the currently set one, the new fields are set.
-func (u userService) UpdateUser(oldUser *types.UserLoginInput, newUser *types.UserLoginInput) (types.User, error) {
+func (u userService) UpdateUser(userID string, oldPassword string, newPassword string) (repository.User, error) {
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
-	if ok := u.CheckUserPassword(oldUser); !ok {
-		log.Debugf("incorrect password for user: %s", oldUser.UserName)
-		return types.User{}, errortypes.IncorrectUsernameOrPasswordError{}
+	if ok := u.CheckUserPassword(userID, oldPassword); !ok {
+		log.Debugf("incorrect password for user: %s", userID)
+		return repository.User{}, errortypes.IncorrectUsernameOrPasswordError{}
 	}
 
-	hash, err := auth.HashString(newUser.Password)
+	hash, err := auth.HashString(newPassword)
 	if err != nil {
-		log.Debugf("failed to hash new password for user: %s", newUser.UserName)
-		return types.User{}, errortypes.PasswordHashingError{}
+		log.Debugf("failed to hash new password for user: %s", userID)
+		return repository.User{}, errortypes.PasswordHashingError{}
 	}
 
-	user := types.User{
-		UserName:     newUser.UserName,
+	user := repository.User{
+		UserName:     userID,
 		PasswordHash: hash,
 	}
 
-	updatedUser, err := userRepository.UpdateUser(&user)
+	updatedUser, err := userRepository.UpdateUser(user)
 	if err != nil {
 		log.Debugf("failed to update user: %s", user.UserName)
-		return types.User{}, err
+		return repository.User{}, err
 	}
 
 	log.Debugf("updated user: %s", user.UserName)
-	return mapUser(updatedUser), nil
-}
-
-// mapUSer maps a User model to a user data object
-func mapUser(u *repository.User) types.User {
-	if u == nil {
-		return types.User{}
-	}
-	return types.User{
-		UserName:     u.UserName,
-		PasswordHash: u.PasswordHash,
-		Posts:        mapPostHandles(u.Posts),
-	}
-}
-
-// mapUsers maps a slice of User models to a slice of user data objects
-func mapUsers(u []repository.User) []types.User {
-	if u == nil {
-		return []types.User{}
-	}
-	users := make([]types.User, 0, len(u))
-
-	for _, user := range u {
-		users = append(users, mapUser(&user))
-	}
-
-	return users
+	return updatedUser, nil
 }

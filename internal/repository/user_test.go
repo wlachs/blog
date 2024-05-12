@@ -7,7 +7,6 @@ import (
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/repository"
-	"github.com/wlachs/blog/internal/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"regexp"
@@ -39,7 +38,7 @@ func TestUserRepository_AddUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName: "testUser",
 	}
 
@@ -60,7 +59,7 @@ func TestUserRepository_AddUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName: "testUser",
 	}
 
@@ -74,7 +73,7 @@ func TestUserRepository_AddUser_Unexpected_Error(t *testing.T) {
 
 	user, err := c.sut.AddUser(author)
 
-	assert.Nil(t, user, "should not return a user")
+	assert.Equal(t, repository.User{}, user, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -83,7 +82,7 @@ func TestUserRepository_GetUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	expectedUser := &repository.User{
+	expectedUser := repository.User{
 		ID:       0,
 		UserName: "testUser",
 	}
@@ -105,19 +104,17 @@ func TestUserRepository_GetUser_Record_Not_Found(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	expectedUser := types.User{
-		UserName: "testUser",
-	}
+	userName := "testUser"
 
 	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 	dbErr := fmt.Errorf("record not found")
-	expectedError := errortypes.UserNotFoundError{User: expectedUser}
+	expectedError := errortypes.UserNotFoundError{UserName: userName}
 
 	c.mockDb.ExpectQuery(query).WillReturnError(dbErr)
 
-	post, err := c.sut.GetUser(expectedUser.UserName)
+	post, err := c.sut.GetUser(userName)
 
-	assert.Nil(t, post, "should not return a user")
+	assert.Equal(t, repository.User{}, post, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -133,7 +130,7 @@ func TestUserRepository_GetUser_Unexpected_Error(t *testing.T) {
 
 	post, err := c.sut.GetUser("test")
 
-	assert.Nil(t, post, "should not return a user")
+	assert.Equal(t, repository.User{}, post, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -182,7 +179,7 @@ func TestUserRepository_UpdateUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName:     "testUser",
 		PasswordHash: "xxx",
 	}
@@ -204,7 +201,7 @@ func TestUserRepository_UpdateUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName:     "testUser",
 		PasswordHash: "xxx",
 	}
@@ -219,6 +216,6 @@ func TestUserRepository_UpdateUser_Unexpected_Error(t *testing.T) {
 
 	user, err := c.sut.UpdateUser(author)
 
-	assert.Nil(t, user, "should not return a user")
+	assert.Equal(t, repository.User{}, user, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }

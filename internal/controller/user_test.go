@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/wlachs/blog/api/types"
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/controller"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/mocks"
+	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/test"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/mock/gomock"
 	"net/http/httptest"
 	"testing"
@@ -43,13 +44,15 @@ func TestUserController_GetUser(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
 
-	expectedOutput := types.User{
+	userModel := repository.User{
 		UserName: "testAuthor",
-		Posts:    []string{"urlHandle1", "urlHandle2"},
+	}
+	expectedOutput := types.User{
+		UserID: userModel.UserName,
 	}
 
-	c.ctx.AddParam("userName", expectedOutput.UserName)
-	c.mockUserService.EXPECT().GetUser(expectedOutput.UserName).Return(expectedOutput, nil)
+	c.ctx.AddParam("UserID", expectedOutput.UserID)
+	c.mockUserService.EXPECT().GetUser(expectedOutput.UserID).Return(userModel, nil)
 
 	c.sut.GetUser(c.ctx)
 
@@ -82,9 +85,9 @@ func TestUserController_GetUser_Incorrect_Username(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	userName := "testAuthor"
-	expectedError := errortypes.UserNotFoundError{User: types.User{UserName: userName}}
-	c.ctx.AddParam("userName", userName)
-	c.mockUserService.EXPECT().GetUser(userName).Return(types.User{}, expectedError)
+	expectedError := errortypes.UserNotFoundError{UserName: userName}
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().GetUser(userName).Return(repository.User{}, expectedError)
 
 	c.sut.GetUser(c.ctx)
 
@@ -100,9 +103,9 @@ func TestUserController_GetUser_Unexpected_Error(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	userName := "testAuthor"
-	expectedError := errortypes.UnexpectedUserError{User: types.User{UserName: userName}}
-	c.ctx.AddParam("userName", userName)
-	c.mockUserService.EXPECT().GetUser(userName).Return(types.User{}, fmt.Errorf("unexpected error"))
+	expectedError := errortypes.UnexpectedUserError{UserName: userName}
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().GetUser(userName).Return(repository.User{}, fmt.Errorf("unexpected error"))
 
 	c.sut.GetUser(c.ctx)
 
@@ -117,14 +120,38 @@ func TestUserController_GetUsers(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
 
-	expectedOutput := []types.User{
+	userModels := []repository.User{
 		{
 			UserName: "testAuthor",
-			Posts:    []string{"urlHandle1", "urlHandle2"},
+			Posts: []repository.Post{
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle1",
+				},
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle2",
+				},
+			},
+		},
+	}
+	expectedOutput := []types.User{
+		{
+			UserID: userModels[0].UserName,
+			Posts: &[]types.PostMetadata{
+				{
+					Id:     userModels[0].Posts[0].URLHandle,
+					Author: userModels[0].UserName,
+				},
+				{
+					Id:     userModels[0].Posts[1].URLHandle,
+					Author: userModels[0].UserName,
+				},
+			},
 		},
 	}
 
-	c.mockUserService.EXPECT().GetUsers().Return(expectedOutput, nil)
+	c.mockUserService.EXPECT().GetUsers().Return(userModels, nil)
 
 	c.sut.GetUsers(c.ctx)
 
@@ -157,27 +184,41 @@ func TestUserController_UpdateUser(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
 
-	input := types.UserUpdateInput{
+	input := types.UpdateUserJSONBody{
 		OldPassword: "oldPW",
 		NewPassword: "newPW",
 	}
-	expectedOutput := types.User{
+	userModel := repository.User{
 		UserName: "testAuthor",
-		Posts:    []string{"urlHandle1", "urlHandle2"},
+		Posts: []repository.Post{
+			{
+				Author:    repository.User{UserName: "testAuthor"},
+				URLHandle: "urlHandle1",
+			},
+			{
+				Author:    repository.User{UserName: "testAuthor"},
+				URLHandle: "urlHandle2",
+			},
+		},
 	}
-	mockOld := types.UserLoginInput{
-		UserName: expectedOutput.UserName,
-		Password: input.OldPassword,
-	}
-	mockNew := types.UserLoginInput{
-		UserName: expectedOutput.UserName,
-		Password: input.NewPassword,
+	expectedOutput := types.User{
+		UserID: userModel.UserName,
+		Posts: &[]types.PostMetadata{
+			{
+				Id:     userModel.Posts[0].URLHandle,
+				Author: userModel.UserName,
+			},
+			{
+				Id:     userModel.Posts[1].URLHandle,
+				Author: userModel.UserName,
+			},
+		},
 	}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.AddParam("userName", expectedOutput.UserName)
-	c.mockUserService.EXPECT().UpdateUser(&mockOld, &mockNew).Return(expectedOutput, nil)
+	c.ctx.AddParam("UserID", expectedOutput.UserID)
+	c.mockUserService.EXPECT().UpdateUser(expectedOutput.UserID, input.OldPassword, input.NewPassword).Return(userModel, nil)
 	c.sut.UpdateUser(c.ctx)
 
 	var output types.User
@@ -194,7 +235,7 @@ func TestUserController_UpdateUser_Invalid_Input(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	userName := "testAuthor"
-	c.ctx.AddParam("userName", userName)
+	c.ctx.AddParam("UserID", userName)
 
 	c.sut.UpdateUser(c.ctx)
 
@@ -209,24 +250,16 @@ func TestUserController_UpdateUser_Incorrect_Username(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	userName := "testAuthor"
-	input := types.UserUpdateInput{
+	input := types.UpdateUserJSONBody{
 		OldPassword: "oldPW",
 		NewPassword: "newPW",
-	}
-	mockOld := types.UserLoginInput{
-		UserName: userName,
-		Password: input.OldPassword,
-	}
-	mockNew := types.UserLoginInput{
-		UserName: userName,
-		Password: input.NewPassword,
 	}
 	expectedError := errortypes.IncorrectUsernameOrPasswordError{}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.AddParam("userName", userName)
-	c.mockUserService.EXPECT().UpdateUser(&mockOld, &mockNew).Return(types.User{}, expectedError)
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().UpdateUser(userName, input.OldPassword, input.NewPassword).Return(repository.User{}, expectedError)
 	c.sut.UpdateUser(c.ctx)
 
 	errors := c.ctx.Errors.Errors()
@@ -241,24 +274,16 @@ func TestUserController_UpdateUser_Unexpected_Error(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	userName := "testAuthor"
-	input := types.UserUpdateInput{
+	input := types.UpdateUserJSONBody{
 		OldPassword: "oldPW",
 		NewPassword: "newPW",
 	}
-	mockOld := types.UserLoginInput{
-		UserName: userName,
-		Password: input.OldPassword,
-	}
-	mockNew := types.UserLoginInput{
-		UserName: userName,
-		Password: input.NewPassword,
-	}
-	expectedError := errortypes.UnexpectedUserError{User: types.User{UserName: userName}}
+	expectedError := errortypes.UnexpectedUserError{UserName: userName}
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.AddParam("userName", userName)
-	c.mockUserService.EXPECT().UpdateUser(&mockOld, &mockNew).Return(types.User{}, fmt.Errorf("unexpected error"))
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().UpdateUser(userName, input.OldPassword, input.NewPassword).Return(repository.User{}, fmt.Errorf("unexpected error"))
 	c.sut.UpdateUser(c.ctx)
 
 	errors := c.ctx.Errors.Errors()

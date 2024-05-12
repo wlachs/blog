@@ -4,13 +4,13 @@ package services_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/wlachs/blog/api/types"
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/mocks"
 	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/services"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/mock/gomock"
 	"testing"
 )
@@ -34,7 +34,7 @@ func createUserServiceContext(t *testing.T) *userTestContext {
 	mockJwtUtils := mocks.NewMockTokenUtils(mockCtrl)
 	cont := container.CreateContainer(logger.CreateLogger(), nil, mockUserRepository, mockJwtUtils)
 
-	mockUserRepository.EXPECT().GetUser("TEST").Return(nil, nil)
+	mockUserRepository.EXPECT().GetUser("TEST").Return(repository.User{}, nil)
 	sut := services.CreateUserService(cont)
 
 	return &userTestContext{mockUserRepository, mockJwtUtils, sut}
@@ -65,15 +65,15 @@ func TestUserService_AuthenticateUser(t *testing.T) {
 		Posts:        []repository.Post{},
 	}
 
-	input := types.UserLoginInput{
-		UserName: userModel.UserName,
+	input := types.DoLoginJSONBody{
+		UserID:   userModel.UserName,
 		Password: "Test",
 	}
 
-	c.mockUserRepository.EXPECT().GetUser(input.UserName).Return(&userModel, nil)
-	c.mockJwtUtils.EXPECT().GenerateJWT(input.UserName).Return("TOKEN", nil)
+	c.mockUserRepository.EXPECT().GetUser(input.UserID).Return(userModel, nil)
+	c.mockJwtUtils.EXPECT().GenerateJWT(input.UserID).Return("TOKEN", nil)
 
-	token, err := c.sut.AuthenticateUser(&input)
+	token, err := c.sut.AuthenticateUser(input.UserID, input.Password)
 
 	assert.Nil(t, err, "expected to complete without error")
 	assert.Equal(t, "TOKEN", token)
@@ -90,16 +90,16 @@ func TestUserService_AuthenticateUser_Invalid_Password(t *testing.T) {
 		Posts:        []repository.Post{},
 	}
 
-	input := types.UserLoginInput{
-		UserName: userModel.UserName,
+	input := types.DoLoginJSONBody{
+		UserID:   userModel.UserName,
 		Password: "test",
 	}
 
 	expectedError := errortypes.IncorrectUsernameOrPasswordError{}
 
-	c.mockUserRepository.EXPECT().GetUser(input.UserName).Return(&userModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(input.UserID).Return(userModel, nil)
 
-	token, err := c.sut.AuthenticateUser(&input)
+	token, err := c.sut.AuthenticateUser(input.UserID, input.Password)
 
 	assert.Equal(t, token, "", "no token should be generated")
 	assert.Equal(t, expectedError, err, "incorrect error type")
@@ -116,14 +116,14 @@ func TestUserService_CheckUserPassword(t *testing.T) {
 		Posts:        []repository.Post{},
 	}
 
-	input := types.UserLoginInput{
-		UserName: userModel.UserName,
+	input := types.DoLoginJSONBody{
+		UserID:   userModel.UserName,
 		Password: "Test",
 	}
 
-	c.mockUserRepository.EXPECT().GetUser(input.UserName).Return(&userModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(input.UserID).Return(userModel, nil)
 
-	success := c.sut.CheckUserPassword(&input)
+	success := c.sut.CheckUserPassword(input.UserID, input.Password)
 
 	assert.True(t, success, "password should match the one stored in the database")
 }
@@ -132,14 +132,14 @@ func TestUserService_CheckUserPassword(t *testing.T) {
 func TestUserService_CheckUserPassword_Invalid_User(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	input := types.UserLoginInput{
-		UserName: "testAuthor",
+	input := types.DoLoginJSONBody{
+		UserID:   "testAuthor",
 		Password: "Test",
 	}
 
-	c.mockUserRepository.EXPECT().GetUser(input.UserName).Return(nil, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().GetUser(input.UserID).Return(repository.User{}, fmt.Errorf("internal error"))
 
-	success := c.sut.CheckUserPassword(&input)
+	success := c.sut.CheckUserPassword(input.UserID, input.Password)
 
 	assert.False(t, success, "username should not match the one stored in the database")
 }
@@ -155,14 +155,14 @@ func TestUserService_CheckUserPassword_Invalid_Password(t *testing.T) {
 		Posts:        []repository.Post{},
 	}
 
-	input := types.UserLoginInput{
-		UserName: userModel.UserName,
+	input := types.DoLoginJSONBody{
+		UserID:   userModel.UserName,
 		Password: "test",
 	}
 
-	c.mockUserRepository.EXPECT().GetUser(input.UserName).Return(&userModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(input.UserID).Return(userModel, nil)
 
-	success := c.sut.CheckUserPassword(&input)
+	success := c.sut.CheckUserPassword(input.UserID, input.Password)
 
 	assert.False(t, success, "password should not match the one stored in the database")
 }
@@ -180,30 +180,24 @@ func TestUserService_GetUser(t *testing.T) {
 		}},
 	}
 
-	expectedUser := types.User{
-		UserName:     userModel.UserName,
-		PasswordHash: userModel.PasswordHash,
-		Posts:        []string{userModel.Posts[0].URLHandle},
-	}
-
-	c.mockUserRepository.EXPECT().GetUser(userModel.UserName).Return(&userModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(userModel.UserName).Return(userModel, nil)
 
 	user, err := c.sut.GetUser(userModel.UserName)
 
 	assert.Nil(t, err, "expected to complete without error")
-	assert.Equal(t, expectedUser, user, "response doesn't match expected user data")
+	assert.Equal(t, userModel, user, "response doesn't match expected user data")
 }
 
 // TestUserService_GetUser_Unexpected_Error tests handling an unexpected error while getting a single user of the blog.
 func TestUserService_GetUser_Unexpected_Error(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	c.mockUserRepository.EXPECT().GetUser(gomock.Any()).Return(nil, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().GetUser(gomock.Any()).Return(repository.User{}, fmt.Errorf("internal error"))
 
 	user, err := c.sut.GetUser("")
 
 	assert.NotNil(t, err, "expected to receive and error")
-	assert.Equal(t, types.User{}, user, "response doesn't match expected user data")
+	assert.Equal(t, repository.User{}, user, "response doesn't match expected user data")
 }
 
 // TestUserService_GetUsers tests getting every user of the blog.
@@ -229,37 +223,24 @@ func TestUserService_GetUsers(t *testing.T) {
 		},
 	}
 
-	expectedUsers := []types.User{
-		{
-			UserName:     userModels[0].UserName,
-			PasswordHash: userModels[0].PasswordHash,
-			Posts:        []string{userModels[0].Posts[0].URLHandle},
-		},
-		{
-			UserName:     userModels[1].UserName,
-			PasswordHash: userModels[1].PasswordHash,
-			Posts:        []string{userModels[1].Posts[0].URLHandle},
-		},
-	}
-
 	c.mockUserRepository.EXPECT().GetUsers().Return(userModels, nil)
 
 	users, err := c.sut.GetUsers()
 
 	assert.Nil(t, err, "expected to complete without error")
-	assert.Equal(t, expectedUsers, users, "response doesn't match expected user data")
+	assert.Equal(t, userModels, users, "response doesn't match expected user data")
 }
 
 // TestUserService_GetUsers_Unexpected_Error tests handling an unexpected error while getting every user of the blog.
 func TestUserService_GetUsers_Unexpected_Error(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	c.mockUserRepository.EXPECT().GetUsers().Return(nil, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().GetUsers().Return([]repository.User{}, fmt.Errorf("internal error"))
 
 	users, err := c.sut.GetUsers()
 
 	assert.NotNil(t, err, "expected to receive an error")
-	assert.Equal(t, []types.User{}, users, "response doesn't match expected user data")
+	assert.Equal(t, []repository.User{}, users, "response doesn't match expected user data")
 }
 
 // TestUserService_RegisterFirstUser tests registering the first user.
@@ -276,8 +257,8 @@ func TestUserService_RegisterFirstUser(t *testing.T) {
 	t.Setenv("DEFAULT_USER", userModel.UserName)
 	t.Setenv("DEFAULT_PASSWORD", "Test")
 
-	c.mockUserRepository.EXPECT().GetUser(userModel.UserName).Return(nil, fmt.Errorf("internal error"))
-	c.mockUserRepository.EXPECT().AddUser(gomock.Any()).Return(&userModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(userModel.UserName).Return(repository.User{}, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().AddUser(gomock.Any()).Return(userModel, nil)
 
 	err := c.sut.RegisterFirstUser()
 
@@ -307,37 +288,31 @@ func TestUserService_RegisterUser(t *testing.T) {
 		Posts:        []repository.Post{},
 	}
 
-	input := types.UserLoginInput{
-		UserName: userModel.UserName,
+	input := types.DoLoginJSONBody{
+		UserID:   userModel.UserName,
 		Password: "Test",
 	}
 
-	expectedUser := types.User{
-		UserName:     userModel.UserName,
-		PasswordHash: userModel.PasswordHash,
-		Posts:        []string{},
-	}
+	c.mockUserRepository.EXPECT().AddUser(gomock.Any()).Return(userModel, nil)
 
-	c.mockUserRepository.EXPECT().AddUser(gomock.Any()).Return(&userModel, nil)
-
-	user, err := c.sut.RegisterUser(&input)
+	user, err := c.sut.RegisterUser(input.UserID, input.Password)
 
 	assert.Nil(t, err, "expected to complete without error")
-	assert.Equal(t, expectedUser, user, "response doesn't match expected user data")
+	assert.Equal(t, userModel, user, "response doesn't match expected user data")
 }
 
 // TestUserService_RegisterUser_Invalid_Password tests adding a new user to the system with a password too long.
 func TestUserService_RegisterUser_Invalid_Password(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	input := types.UserLoginInput{
-		UserName: "testAuthor",
+	input := types.DoLoginJSONBody{
+		UserID:   "testAuthor",
 		Password: "1234567890123456789012345678901234567890123456789012345678901234567890123",
 	}
 
 	expectedError := errortypes.PasswordHashingError{}
 
-	_, err := c.sut.RegisterUser(&input)
+	_, err := c.sut.RegisterUser(input.UserID, input.Password)
 
 	assert.Equal(t, expectedError, err, "incorrect error type")
 }
@@ -346,66 +321,52 @@ func TestUserService_RegisterUser_Invalid_Password(t *testing.T) {
 func TestUserService_UpdateUser(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	oldUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test",
-	}
-
-	newUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test1",
-	}
-
+	userID := "testAuthor"
+	oldPassword := "Test"
+	newPassword := "Test1"
 	oldUserModel := repository.User{
 		ID:           0,
-		UserName:     oldUser.UserName,
+		UserName:     userID,
 		PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
 		Posts:        []repository.Post{},
 	}
 
 	newUserModel := repository.User{
 		ID:           0,
-		UserName:     oldUser.UserName,
+		UserName:     userID,
 		PasswordHash: "$2y$10$o7ZqUckxyaZAS31yFfBhTutbo3cWUQkvsdnVikvhrn69.c5kG0/TS",
 		Posts:        []repository.Post{},
 	}
 
-	expectedNewUser := types.User{
-		UserName:     oldUser.UserName,
-		PasswordHash: newUserModel.PasswordHash,
-		Posts:        []string{},
-	}
+	c.mockUserRepository.EXPECT().GetUser(userID).Return(oldUserModel, nil)
+	c.mockUserRepository.EXPECT().UpdateUser(gomock.Any()).Return(newUserModel, nil)
 
-	c.mockUserRepository.EXPECT().GetUser(oldUser.UserName).Return(&oldUserModel, nil)
-	c.mockUserRepository.EXPECT().UpdateUser(gomock.Any()).Return(&newUserModel, nil)
-
-	user, err := c.sut.UpdateUser(&oldUser, &newUser)
+	user, err := c.sut.UpdateUser(userID, oldPassword, newPassword)
 
 	assert.Nil(t, err, "expected to complete without error")
-	assert.Equal(t, expectedNewUser, user, "response doesn't match expected user data")
+	assert.Equal(t, newUserModel, user, "response doesn't match expected user data")
 }
 
 // TestUserService_UpdateUser_Invalid_Old_Password tests updating an existing user with an incorrect password.
 func TestUserService_UpdateUser_Invalid_Old_Password(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	oldUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test1",
-	}
+	userID := "testAuthor"
+	oldPassword := "wrong password"
+	newPassword := "something new"
 
 	oldUserModel := repository.User{
 		ID:           0,
-		UserName:     oldUser.UserName,
+		UserName:     userID,
 		PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
 		Posts:        []repository.Post{},
 	}
 
 	expectedError := errortypes.IncorrectUsernameOrPasswordError{}
 
-	c.mockUserRepository.EXPECT().GetUser(oldUser.UserName).Return(&oldUserModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(userID).Return(oldUserModel, nil)
 
-	_, err := c.sut.UpdateUser(&oldUser, &types.UserLoginInput{})
+	_, err := c.sut.UpdateUser(userID, oldPassword, newPassword)
 
 	assert.Equal(t, expectedError, err, "incorrect error type")
 }
@@ -414,28 +375,22 @@ func TestUserService_UpdateUser_Invalid_Old_Password(t *testing.T) {
 func TestUserService_UpdateUser_Invalid_New_Password(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	oldUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test",
-	}
-
-	newUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "1234567890123456789012345678901234567890123456789012345678901234567890123",
-	}
+	userID := "testAuthor"
+	oldPassword := "Test"
+	newPassword := "1234567890123456789012345678901234567890123456789012345678901234567890123"
 
 	oldUserModel := repository.User{
 		ID:           0,
-		UserName:     oldUser.UserName,
+		UserName:     userID,
 		PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
 		Posts:        []repository.Post{},
 	}
 
 	expectedError := errortypes.PasswordHashingError{}
 
-	c.mockUserRepository.EXPECT().GetUser(oldUser.UserName).Return(&oldUserModel, nil)
+	c.mockUserRepository.EXPECT().GetUser(userID).Return(oldUserModel, nil)
 
-	_, err := c.sut.UpdateUser(&oldUser, &newUser)
+	_, err := c.sut.UpdateUser(userID, oldPassword, newPassword)
 
 	assert.Equal(t, expectedError, err, "incorrect error type")
 }
@@ -444,27 +399,21 @@ func TestUserService_UpdateUser_Invalid_New_Password(t *testing.T) {
 func TestUserService_UpdateUser_Unexpected_Error(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	oldUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test",
-	}
-
-	newUser := types.UserLoginInput{
-		UserName: "testAuthor",
-		Password: "Test1",
-	}
+	userID := "testAuthor"
+	oldPassword := "Test"
+	newPassword := "Test1"
 
 	oldUserModel := repository.User{
 		ID:           0,
-		UserName:     oldUser.UserName,
+		UserName:     userID,
 		PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
 		Posts:        []repository.Post{},
 	}
 
-	c.mockUserRepository.EXPECT().GetUser(oldUser.UserName).Return(&oldUserModel, nil)
-	c.mockUserRepository.EXPECT().UpdateUser(gomock.Any()).Return(nil, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().GetUser(userID).Return(oldUserModel, nil)
+	c.mockUserRepository.EXPECT().UpdateUser(gomock.Any()).Return(repository.User{}, fmt.Errorf("internal error"))
 
-	_, err := c.sut.UpdateUser(&oldUser, &newUser)
+	_, err := c.sut.UpdateUser(userID, oldPassword, newPassword)
 
 	assert.NotNil(t, err, "expected to receive an error")
 }

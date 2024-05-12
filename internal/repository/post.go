@@ -3,7 +3,6 @@ package repository
 //go:generate mockgen-v0.4.0 -source=post.go -destination=../mocks/mock_post_repository.go -package=mocks
 
 import (
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/zap"
 	"strings"
 	"time"
@@ -26,8 +25,8 @@ type Post struct {
 
 // PostRepository interface defining post-related database operations.
 type PostRepository interface {
-	AddPost(post *types.Post, authorID uint) (*Post, error)
-	GetPost(urlHandle string) (*Post, error)
+	AddPost(post Post, authorID uint) (Post, error)
+	GetPost(urlHandle string) (Post, error)
 	GetPosts() ([]Post, error)
 }
 
@@ -56,7 +55,7 @@ func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 
 // AddPost adds a new post with the provided fields to the database.
 // The second parameter holds information about the author.
-func (p postRepository) AddPost(post *types.Post, authorID uint) (*Post, error) {
+func (p postRepository) AddPost(post Post, authorID uint) (Post, error) {
 	log := p.logger
 	repo := p.repository
 
@@ -70,18 +69,18 @@ func (p postRepository) AddPost(post *types.Post, authorID uint) (*Post, error) 
 
 	if result := repo.Create(&newPost); result.Error == nil {
 		log.Debugf("created post: %v", newPost)
-		return &newPost, nil
+		return newPost, nil
 	} else if strings.Contains(result.Error.Error(), "1062") {
 		log.Debugf("failed to create post, duplicate key: %s, error: %v", post.URLHandle, result.Error)
-		return nil, errortypes.DuplicateElementError{Key: post.URLHandle}
+		return Post{}, errortypes.DuplicateElementError{Key: post.URLHandle}
 	} else {
-		log.Debugf("failed to create post: %s, error: %s", post, result.Error)
-		return nil, result.Error
+		log.Debugf("failed to create post: %v, error: %s", post, result.Error)
+		return Post{}, result.Error
 	}
 }
 
 // GetPost retrieves the post with the given URL-handle from the database.
-func (p postRepository) GetPost(urlHandle string) (*Post, error) {
+func (p postRepository) GetPost(urlHandle string) (Post, error) {
 	log := p.logger
 	repo := p.repository
 
@@ -94,13 +93,13 @@ func (p postRepository) GetPost(urlHandle string) (*Post, error) {
 	if result.Error != nil {
 		log.Debugf("failed to retrieve post with handle: %s, error: %v", urlHandle, result.Error)
 		if result.Error.Error() == "record not found" {
-			return nil, errortypes.PostNotFoundError{Post: types.Post{URLHandle: urlHandle}}
+			return Post{}, errortypes.PostNotFoundError{URLHandle: urlHandle}
 		}
-		return nil, result.Error
+		return Post{}, result.Error
 	}
 
 	log.Debugf("retrieved post: %v", post)
-	return &post, nil
+	return post, nil
 }
 
 // GetPosts retrieves every post from the database.

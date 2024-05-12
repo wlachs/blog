@@ -22,15 +22,15 @@ func CreateRoutes(cont container.Container) {
 	userCtrl := CreateUserController(cont, userService)
 
 	// Posts
-	router.GET("/posts", postCtrl.GetPosts)
-	router.GET("/posts/:id", postCtrl.GetPost)
-	router.POST("/posts", authCtrl.Protect, postCtrl.AddPost)
+	router.GET("/api/v0/posts", postCtrl.GetPosts)
+	router.GET("/api/v0/posts/:PostID", postCtrl.GetPost)
+	router.POST("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.AddPost)
 
 	// Users
-	router.GET("/users", userCtrl.GetUsers)
-	router.GET("/users/:userName", userCtrl.GetUser)
-	router.PUT("/users/:userName", userCtrl.UpdateUser)
-	router.POST("/login", authCtrl.Login)
+	router.GET("/api/v0/users", userCtrl.GetUsers)
+	router.GET("/api/v0/users/:UserID", userCtrl.GetUser)
+	router.PUT("/api/v0/users/:UserID", userCtrl.UpdateUser)
+	router.POST("/api/v0/login", authCtrl.Login)
 
 	port := os.Getenv("PORT")
 	err := router.Run(":" + port)

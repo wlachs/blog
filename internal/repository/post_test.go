@@ -7,7 +7,6 @@ import (
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/logger"
 	"github.com/wlachs/blog/internal/repository"
-	"github.com/wlachs/blog/internal/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"regexp"
@@ -39,7 +38,7 @@ func TestPostRepository_AddPost(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	inputPost := &types.Post{
+	inputPost := repository.Post{
 		URLHandle: "testHandle",
 	}
 
@@ -64,7 +63,7 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	inputPost := &types.Post{
+	inputPost := repository.Post{
 		URLHandle: "testHandle",
 	}
 
@@ -79,7 +78,7 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 
 	post, err := c.sut.AddPost(inputPost, 0)
 
-	assert.Nil(t, post, "should not return a post")
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -88,7 +87,7 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	inputPost := &types.Post{
+	inputPost := repository.Post{
 		URLHandle: "testHandle",
 	}
 
@@ -102,7 +101,7 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 
 	post, err := c.sut.AddPost(inputPost, 0)
 
-	assert.Nil(t, post, "should not return a post")
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -111,7 +110,7 @@ func TestPostRepository_GetPost(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	expectedPost := &repository.Post{
+	expectedPost := repository.Post{
 		URLHandle: "testHandle",
 	}
 
@@ -132,19 +131,19 @@ func TestPostRepository_GetPost_Record_Not_Found(t *testing.T) {
 	t.Parallel()
 	c := createPostRepositoryContext(t)
 
-	expectedPost := types.Post{
+	expectedPost := repository.Post{
 		URLHandle: "testHandle",
 	}
 
 	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
 	dbErr := fmt.Errorf("record not found")
-	expectedError := errortypes.PostNotFoundError{Post: expectedPost}
+	expectedError := errortypes.PostNotFoundError{URLHandle: expectedPost.URLHandle}
 
 	c.mockDb.ExpectQuery(query).WillReturnError(dbErr)
 
 	post, err := c.sut.GetPost(expectedPost.URLHandle)
 
-	assert.Nil(t, post, "should not return a post")
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -160,7 +159,7 @@ func TestPostRepository_GetPost_Unexpected_Error(t *testing.T) {
 
 	post, err := c.sut.GetPost("test")
 
-	assert.Nil(t, post, "should not return a post")
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 

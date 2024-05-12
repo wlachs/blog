@@ -4,7 +4,6 @@ package repository
 
 import (
 	"github.com/wlachs/blog/internal/errortypes"
-	"github.com/wlachs/blog/internal/types"
 	"go.uber.org/zap"
 	"time"
 )
@@ -21,10 +20,10 @@ type User struct {
 
 // UserRepository interface defining user-related database operations.
 type UserRepository interface {
-	AddUser(user *types.User) (*User, error)
-	GetUser(userName string) (*User, error)
+	AddUser(user User) (User, error)
+	GetUser(userName string) (User, error)
 	GetUsers() ([]User, error)
-	UpdateUser(user *types.User) (*User, error)
+	UpdateUser(user User) (User, error)
 }
 
 // userRepository is the concrete implementation of the UserRepository interface
@@ -51,7 +50,7 @@ func initUserModel(logger *zap.SugaredLogger, repository Repository) {
 }
 
 // AddUser adds a new user with the provided fields to the database.
-func (u userRepository) AddUser(user *types.User) (*User, error) {
+func (u userRepository) AddUser(user User) (User, error) {
 	log := u.logger
 	repo := u.repository
 
@@ -62,15 +61,17 @@ func (u userRepository) AddUser(user *types.User) (*User, error) {
 
 	if result := repo.Create(&newUser); result.Error != nil {
 		log.Debugf("failed to create new user: %v, error: %v", newUser, result.Error)
-		return nil, result.Error
+		return User{}, result.Error
 	}
 
+	populateUserAsAuthorOfPosts(&user)
+
 	log.Debugf("created new user: %v", newUser)
-	return &newUser, nil
+	return newUser, nil
 }
 
 // GetUser retrieves a user with the given userName from the database.
-func (u userRepository) GetUser(userName string) (*User, error) {
+func (u userRepository) GetUser(userName string) (User, error) {
 	log := u.logger
 	repo := u.repository
 
@@ -83,13 +84,15 @@ func (u userRepository) GetUser(userName string) (*User, error) {
 	if result.Error != nil {
 		log.Debugf("failed to retrieve user: %v, error: %v", user, result.Error)
 		if result.Error.Error() == "record not found" {
-			return nil, errortypes.UserNotFoundError{User: types.User{UserName: userName}}
+			return User{}, errortypes.UserNotFoundError{UserName: userName}
 		}
-		return nil, result.Error
+		return User{}, result.Error
 	}
 
+	populateUserAsAuthorOfPosts(&user)
+
 	log.Debugf("retrieved user: %v", user)
-	return &user, nil
+	return user, nil
 }
 
 // GetUsers retrieves every user from the database.
@@ -103,12 +106,14 @@ func (u userRepository) GetUsers() ([]User, error) {
 		return []User{}, result.Error
 	}
 
+	populateUsersAsAuthorsOfPosts(users)
+
 	log.Debugf("retrieved users: %v", users)
 	return users, nil
 }
 
 // UpdateUser updates an existing user with the provided data.
-func (u userRepository) UpdateUser(user *types.User) (*User, error) {
+func (u userRepository) UpdateUser(user User) (User, error) {
 	log := u.logger
 	repo := u.repository
 
@@ -117,9 +122,27 @@ func (u userRepository) UpdateUser(user *types.User) (*User, error) {
 
 	if result := repo.Where(&userToUpdate).Updates(&pw); result.Error != nil {
 		log.Debugf("failed to update user %v, error: %v", userToUpdate, result.Error)
-		return nil, result.Error
+		return User{}, result.Error
 	}
 
+	populateUserAsAuthorOfPosts(&user)
+
 	log.Debugf("updated user: %v", userToUpdate)
-	return &userToUpdate, nil
+	return userToUpdate, nil
+}
+
+// populateUserAsAuthorOfPosts manually sets user model for contained posts
+func populateUserAsAuthorOfPosts(user *User) {
+	for i := range user.Posts {
+		user.Posts[i].Author = *user
+		// Set posts to nil to avoid circular reference
+		user.Posts[i].Author.Posts = nil
+	}
+}
+
+// populateUsersAsAuthorsOfPosts manually sets user models for contained posts
+func populateUsersAsAuthorsOfPosts(users []User) {
+	for userIndex := range users {
+		populateUserAsAuthorOfPosts(&users[userIndex])
+	}
 }
