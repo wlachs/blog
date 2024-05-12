@@ -283,11 +283,12 @@ components:
         - metadata
       allOf:
         - $ref: '#/components/schemas/PostMetadata'
-      properties:
-        body:
-          type: string
-          description: Post body. Only loaded when a post is explicitly requested
-          example: Post content in Markdown
+        - type: object
+          properties:
+            body:
+              type: string
+              description: Post body. Only loaded when a post is explicitly requested
+              example: Post content in Markdown
     NewPost:
       type: object
       description: Post object that needs to be added
