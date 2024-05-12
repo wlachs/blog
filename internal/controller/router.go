@@ -25,6 +25,7 @@ func CreateRoutes(cont container.Container) {
 	router.GET("/api/v0/posts", postCtrl.GetPosts)
 	router.GET("/api/v0/posts/:PostID", postCtrl.GetPost)
 	router.POST("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.AddPost)
+	router.PUT("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.UpdatePost)
 
 	// Users
 	router.GET("/api/v0/users", userCtrl.GetUsers)

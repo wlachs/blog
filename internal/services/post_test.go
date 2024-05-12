@@ -39,24 +39,25 @@ func TestPostService_AddPost(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		ID:       0,
 		UserName: "testAuthor",
 		Posts:    []repository.Post{},
 	}
-
 	postModel := repository.Post{
 		ID:        0,
 		URLHandle: "testUrlHandle",
 		AuthorID:  userModel.ID,
 		Author:    userModel,
-		Title:     "testTitle",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 		CreatedAt: time.Time{}.Local(),
 		UpdatedAt: time.Time{}.Local(),
 	}
-
 	newPost := repository.Post{
 		URLHandle: postModel.URLHandle,
 		Title:     postModel.Title,
@@ -78,11 +79,14 @@ func TestPostService_AddPost_Invalid_User(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	newPost := repository.Post{
 		URLHandle: "testUrlHandle",
-		Title:     "testTitle",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 	}
 
 	c.mostUserRepository.EXPECT().GetUser("testAuthor").Return(repository.User{}, fmt.Errorf("error"))
@@ -98,6 +102,9 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		ID:       0,
 		UserName: "testAuthor",
@@ -108,9 +115,9 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 		URLHandle: "duplicateUrlHandle",
 		AuthorID:  userModel.ID,
 		Author:    userModel,
-		Title:     "testTitle",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 		CreatedAt: time.Time{}.Local(),
 		UpdatedAt: time.Time{}.Local(),
 	}
@@ -137,24 +144,25 @@ func TestPostService_GetPost(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		ID:       0,
 		UserName: "testAuthor",
 		Posts:    []repository.Post{},
 	}
-
 	postModel := repository.Post{
 		ID:        0,
 		URLHandle: "testUrlHandle",
 		AuthorID:  userModel.ID,
 		Author:    userModel,
-		Title:     "testTitle",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 		CreatedAt: time.Time{}.Local(),
 		UpdatedAt: time.Time{}.Local(),
 	}
-
 	post := repository.Post{
 		URLHandle: postModel.URLHandle,
 		Title:     postModel.Title,
@@ -189,21 +197,23 @@ func TestPostService_GetPosts(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		ID:       0,
 		UserName: "testAuthor",
 		Posts:    []repository.Post{},
 	}
-
 	postModels := []repository.Post{
 		{
 			ID:        0,
 			URLHandle: "testUrlHandle",
 			AuthorID:  userModel.ID,
 			Author:    userModel,
-			Title:     "testTitle",
-			Summary:   "testSummary",
-			Body:      "testBody",
+			Title:     &title,
+			Summary:   &summary,
+			Body:      &body,
 			CreatedAt: time.Time{}.Local(),
 			UpdatedAt: time.Time{}.Local(),
 		},

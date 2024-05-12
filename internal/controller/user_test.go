@@ -120,6 +120,8 @@ func TestUserController_GetUsers(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
 
+	title1 := "testTitle1"
+	title2 := "testTitle2"
 	userModels := []repository.User{
 		{
 			UserName: "testAuthor",
@@ -127,10 +129,12 @@ func TestUserController_GetUsers(t *testing.T) {
 				{
 					Author:    repository.User{UserName: "testAuthor"},
 					URLHandle: "urlHandle1",
+					Title:     &title1,
 				},
 				{
 					Author:    repository.User{UserName: "testAuthor"},
 					URLHandle: "urlHandle2",
+					Title:     &title2,
 				},
 			},
 		},
@@ -142,10 +146,12 @@ func TestUserController_GetUsers(t *testing.T) {
 				{
 					Id:     userModels[0].Posts[0].URLHandle,
 					Author: userModels[0].UserName,
+					Title:  title1,
 				},
 				{
 					Id:     userModels[0].Posts[1].URLHandle,
 					Author: userModels[0].UserName,
+					Title:  title2,
 				},
 			},
 		},
@@ -184,6 +190,8 @@ func TestUserController_UpdateUser(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
 
+	title1 := "testTitle1"
+	title2 := "testTitle2"
 	input := types.UpdateUserJSONBody{
 		OldPassword: "oldPW",
 		NewPassword: "newPW",
@@ -194,10 +202,12 @@ func TestUserController_UpdateUser(t *testing.T) {
 			{
 				Author:    repository.User{UserName: "testAuthor"},
 				URLHandle: "urlHandle1",
+				Title:     &title1,
 			},
 			{
 				Author:    repository.User{UserName: "testAuthor"},
 				URLHandle: "urlHandle2",
+				Title:     &title2,
 			},
 		},
 	}
@@ -207,10 +217,12 @@ func TestUserController_UpdateUser(t *testing.T) {
 			{
 				Id:     userModel.Posts[0].URLHandle,
 				Author: userModel.UserName,
+				Title:  title1,
 			},
 			{
 				Id:     userModel.Posts[1].URLHandle,
 				Author: userModel.UserName,
+				Title:  title2,
 			},
 		},
 	}

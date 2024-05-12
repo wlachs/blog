@@ -13,6 +13,7 @@ import (
 // PostController interface defining post-related middleware methods to handle HTTP requests
 type PostController interface {
 	AddPost(c *gin.Context)
+	UpdatePost(c *gin.Context)
 	GetPost(c *gin.Context)
 	GetPosts(c *gin.Context)
 }
@@ -28,7 +29,7 @@ func CreatePostController(cont container.Container, postService services.PostSer
 	return &postController{cont, postService}
 }
 
-// AddPost middleware. Top level handler of /posts POST requests.
+// AddPost middleware. Top level handler of /posts/:PostID POST requests.
 func (controller postController) AddPost(c *gin.Context) {
 	postService := controller.postService
 
@@ -44,15 +45,9 @@ func (controller postController) AddPost(c *gin.Context) {
 	// Create new raw post item
 	newPost := repository.Post{
 		URLHandle: postID,
-	}
-	if body.Title != nil {
-		newPost.Title = *body.Title
-	}
-	if body.Summary != nil {
-		newPost.Summary = *body.Summary
-	}
-	if body.Body != nil {
-		newPost.Body = *body.Body
+		Title:     body.Title,
+		Summary:   body.Summary,
+		Body:      body.Body,
 	}
 
 	post, err := postService.AddPost(newPost, author)
@@ -67,7 +62,40 @@ func (controller postController) AddPost(c *gin.Context) {
 	}
 }
 
-// GetPost middleware. Top level handler of /posts/:id GET requests.
+// UpdatePost middleware. Top level handler of /posts/:PostID PUT requests.
+// Updates an existing post with the given new metadata. If the post doesn't exist, an exception is thrown.
+func (controller postController) UpdatePost(c *gin.Context) {
+	postService := controller.postService
+
+	var body types.UpdatedPost
+	if err := c.BindJSON(&body); err != nil {
+		return
+	}
+
+	// Set post ID from context
+	postID, _ := c.Params.Get("PostID")
+
+	// Create new raw post item
+	updatedPost := repository.Post{
+		URLHandle: postID,
+		Title:     body.Title,
+		Summary:   body.Summary,
+		Body:      body.Body,
+	}
+
+	post, err := postService.UpdatePost(updatedPost)
+
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, populatePost(post))
+	case errortypes.PostNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{URLHandle: postID})
+	}
+}
+
+// GetPost middleware. Top level handler of /posts/:PostID GET requests.
 func (controller postController) GetPost(c *gin.Context) {
 	postService := controller.postService
 
@@ -108,14 +136,9 @@ func populatePost(post repository.Post) types.Post {
 		Author:       post.Author.UserName,
 		CreationTime: post.CreatedAt,
 		Id:           post.URLHandle,
-		Title:        post.Title,
-	}
-
-	if len(post.Summary) > 0 {
-		p.Summary = &post.Summary
-	}
-	if len(post.Body) > 0 {
-		p.Body = &post.Body
+		Summary:      post.Summary,
+		Body:         post.Body,
+		Title:        *post.Title,
 	}
 
 	return p
@@ -127,11 +150,8 @@ func populatePostMetadata(post repository.Post) types.PostMetadata {
 		Author:       post.Author.UserName,
 		CreationTime: post.CreatedAt,
 		Id:           post.URLHandle,
-		Title:        post.Title,
-	}
-
-	if len(post.Summary) > 0 {
-		p.Summary = &post.Summary
+		Summary:      post.Summary,
+		Title:        *post.Title,
 	}
 
 	return p

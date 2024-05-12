@@ -57,9 +57,9 @@ func TestPostController_AddPost(t *testing.T) {
 
 	postModel := repository.Post{
 		URLHandle: input.Id,
-		Title:     input.Title,
-		Summary:   *input.Summary,
-		Body:      *input.Body,
+		Title:     &input.Title,
+		Summary:   input.Summary,
+		Body:      input.Body,
 	}
 
 	test.MockJsonPost(c.ctx, input)
@@ -97,17 +97,20 @@ func TestPostController_AddPost_Duplicate_Input(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	author := "testAuthor"
 	postModel := repository.Post{
 		URLHandle: "duplicateUrlHandle",
-		Title:     "testTitle",
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 	}
 	input := types.NewPost{
-		Title:   &postModel.Title,
-		Summary: &postModel.Summary,
-		Body:    &postModel.Body,
+		Title:   postModel.Title,
+		Summary: postModel.Summary,
+		Body:    postModel.Body,
 	}
 
 	test.MockJsonPost(c.ctx, input)
@@ -130,15 +133,18 @@ func TestPostController_AddPost_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		UserName: "testAuthor",
 	}
 	postModel := repository.Post{
 		URLHandle: "testUrlHandle",
-		Title:     "testTitle",
 		Author:    userModel,
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 	}
 	inputModel := repository.Post{
 		URLHandle: postModel.URLHandle,
@@ -147,9 +153,9 @@ func TestPostController_AddPost_Unexpected_Error(t *testing.T) {
 		Body:      postModel.Body,
 	}
 	input := types.NewPost{
-		Body:    &postModel.Body,
-		Summary: &postModel.Summary,
-		Title:   &postModel.Title,
+		Body:    postModel.Body,
+		Summary: postModel.Summary,
+		Title:   postModel.Title,
 	}
 
 	test.MockJsonPost(c.ctx, input)
@@ -170,24 +176,27 @@ func TestPostController_AddPost_Unexpected_Error(t *testing.T) {
 // TestPostController_GetPost tests retrieving a single post by its URL handle from the blog.
 func TestPostController_GetPost(t *testing.T) {
 	t.Parallel()
-
 	c := createPostControllerContext(t)
+
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
 	userModel := repository.User{
 		UserName: "testAuthor",
 	}
 	postModel := repository.Post{
 		URLHandle: "testUrlHandle",
-		Title:     "testTitle",
 		Author:    userModel,
-		Summary:   "testSummary",
-		Body:      "testBody",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
 	}
 	expectedOutput := types.Post{
 		Author:  postModel.Author.UserName,
-		Body:    &postModel.Body,
 		Id:      postModel.URLHandle,
-		Summary: &postModel.Summary,
-		Title:   postModel.Title,
+		Title:   *postModel.Title,
+		Summary: postModel.Summary,
+		Body:    postModel.Body,
 	}
 
 	c.ctx.AddParam("PostID", postModel.URLHandle)
@@ -272,9 +281,9 @@ func TestPostController_GetPosts(t *testing.T) {
 	postModels := []repository.Post{
 		{
 			URLHandle: urlHandle,
-			Title:     title,
 			Author:    userModel,
-			Summary:   summary,
+			Title:     &title,
+			Summary:   &summary,
 		},
 	}
 

@@ -16,9 +16,9 @@ type Post struct {
 	URLHandle string `gorm:"unique;not null"`
 	AuthorID  uint   `gorm:"not null"`
 	Author    User
-	Title     string
-	Summary   string
-	Body      string
+	Title     *string
+	Summary   *string
+	Body      *string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -26,6 +26,7 @@ type Post struct {
 // PostRepository interface defining post-related database operations.
 type PostRepository interface {
 	AddPost(post Post, authorID uint) (Post, error)
+	UpdatePost(post Post) (Post, error)
 	GetPost(urlHandle string) (Post, error)
 	GetPosts() ([]Post, error)
 }
@@ -69,12 +70,32 @@ func (p postRepository) AddPost(post Post, authorID uint) (Post, error) {
 
 	if result := repo.Create(&newPost); result.Error == nil {
 		log.Debugf("created post: %v", newPost)
-		return newPost, nil
+		return p.GetPost(post.URLHandle)
 	} else if strings.Contains(result.Error.Error(), "1062") {
 		log.Debugf("failed to create post, duplicate key: %s, error: %v", post.URLHandle, result.Error)
 		return Post{}, errortypes.DuplicateElementError{Key: post.URLHandle}
 	} else {
 		log.Debugf("failed to create post: %v, error: %s", post, result.Error)
+		return Post{}, result.Error
+	}
+}
+
+// UpdatePost updates an existing post with the provided fields to the database.
+func (p postRepository) UpdatePost(updatedPost Post) (Post, error) {
+	log := p.logger
+	repo := p.repository
+
+	post := Post{
+		URLHandle: updatedPost.URLHandle,
+	}
+
+	if result := repo.Where(&post).Updates(updatedPost); result.RowsAffected == 1 {
+		log.Debugf("updated post: %v", updatedPost)
+		return p.GetPost(post.URLHandle)
+	} else if result.RowsAffected == 0 {
+		return Post{}, errortypes.PostNotFoundError{URLHandle: post.URLHandle}
+	} else {
+		log.Debugf("failed to update post: %v, error: %s", post, result.Error)
 		return Post{}, result.Error
 	}
 }

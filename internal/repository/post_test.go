@@ -47,10 +47,14 @@ func TestPostRepository_AddPost(t *testing.T) {
 	}
 
 	postQuery := regexp.QuoteMeta("INSERT INTO `posts` (`url_handle`,`author_id`,`title`,`summary`,`body`,`created_at`,`updated_at`) VALUES (?,?,?,?,?,?,?)")
+	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
 
 	c.mockDb.ExpectBegin()
 	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 1))
 	c.mockDb.ExpectCommit()
+	c.mockDb.ExpectQuery(query).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "url_handle"}).
+			AddRow(expectedPost.ID, expectedPost.URLHandle))
 
 	post, err := c.sut.AddPost(inputPost, 0)
 

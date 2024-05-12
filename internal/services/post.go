@@ -10,6 +10,7 @@ import (
 // PostService interface. Defines post-related business logic.
 type PostService interface {
 	AddPost(newPost repository.Post, authorName string) (repository.Post, error)
+	UpdatePost(updatedPost repository.Post) (repository.Post, error)
 	GetPost(id string) (repository.Post, error)
 	GetPosts() ([]repository.Post, error)
 }
@@ -40,6 +41,16 @@ func (p postService) AddPost(newPost repository.Post, authorName string) (reposi
 	log.Infof("adding new post %v with author %s", newPost, authorName)
 
 	return postRepository.AddPost(newPost, author.ID)
+}
+
+// UpdatePost updates an existing post in the blog.
+func (p postService) UpdatePost(updatedPost repository.Post) (repository.Post, error) {
+	log := p.cont.GetLogger()
+	postRepository := p.cont.GetPostRepository()
+
+	log.Infof("updating post %v", updatedPost)
+
+	return postRepository.UpdatePost(updatedPost)
 }
 
 // GetPost retrieves the post with the given URL handle.
