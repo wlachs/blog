@@ -29,6 +29,13 @@ func (i MissingUsernameError) Error() string {
 	return "no username provided"
 }
 
+type MissingPasswordError struct {
+}
+
+func (i MissingPasswordError) Error() string {
+	return "no password provided"
+}
+
 type UserNotFoundError struct {
 	UserName string
 }

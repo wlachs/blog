@@ -116,6 +116,11 @@ func (u userService) RegisterUser(userID string, password string) (repository.Us
 	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
 
+	// Make sure the password is not empty
+	if len(password) == 0 {
+		return repository.User{}, errortypes.MissingPasswordError{}
+	}
+
 	hash, err := auth.HashString(password)
 	if err != nil {
 		log.Errorf("failed to calculate password hash: %v", err)

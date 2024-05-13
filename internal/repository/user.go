@@ -5,6 +5,7 @@ package repository
 import (
 	"github.com/wlachs/blog/internal/errortypes"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -54,20 +55,20 @@ func (u userRepository) AddUser(user User) (User, error) {
 	log := u.logger
 	repo := u.repository
 
-	newUser := User{
-		UserName:     user.UserName,
-		PasswordHash: user.PasswordHash,
-	}
-
-	if result := repo.Create(&newUser); result.Error != nil {
-		log.Debugf("failed to create new user: %v, error: %v", newUser, result.Error)
-		return User{}, result.Error
+	if result := repo.Create(&user); result.Error != nil {
+		if strings.Contains(result.Error.Error(), "1062") {
+			log.Debugf("failed to create new user, duplicate key: %s, error: %v", user.UserName, result.Error)
+			return User{}, errortypes.DuplicateElementError{Key: user.UserName}
+		} else {
+			log.Debugf("failed to create new user: %v, error: %v", user, result.Error)
+			return User{}, result.Error
+		}
 	}
 
 	populateUserAsAuthorOfPosts(&user)
 
-	log.Debugf("created new user: %v", newUser)
-	return newUser, nil
+	log.Debugf("created new user: %v", user)
+	return user, nil
 }
 
 // GetUser retrieves a user with the given userName from the database.

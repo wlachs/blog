@@ -30,7 +30,8 @@ func CreateRoutes(cont container.Container) {
 	// Users
 	router.GET("/api/v0/users", userCtrl.GetUsers)
 	router.GET("/api/v0/users/:UserID", userCtrl.GetUser)
-	router.PUT("/api/v0/users/:UserID", userCtrl.UpdateUser)
+	router.POST("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.AddUser)
+	router.PUT("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.UpdateUser)
 	router.POST("/api/v0/login", authCtrl.Login)
 
 	port := os.Getenv("PORT")

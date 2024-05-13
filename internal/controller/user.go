@@ -14,6 +14,7 @@ import (
 type UserController interface {
 	GetUser(c *gin.Context)
 	GetUsers(c *gin.Context)
+	AddUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
 }
 
@@ -60,6 +61,31 @@ func (u userController) GetUsers(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, populateUsers(users))
+}
+
+// AddUser middleware. Top level handler of /users/:UserID POST requests.
+// Registers a new user.
+func (u userController) AddUser(c *gin.Context) {
+	userService := u.userService
+
+	var p types.AddUserJSONBody
+	if err := c.BindJSON(&p); err != nil {
+		return
+	}
+
+	userID, _ := c.Params.Get("UserID")
+	user, err := userService.RegisterUser(userID, p.Password)
+
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusCreated, populateUser(user))
+	case errortypes.MissingPasswordError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	case errortypes.DuplicateElementError:
+		_ = c.AbortWithError(http.StatusConflict, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
+	}
 }
 
 // UpdateUser middleware. Top level handler of /users/:UserID PUT requests.
