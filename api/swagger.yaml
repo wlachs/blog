@@ -95,6 +95,21 @@ paths:
           description: Post with the provided ID doesn't exist
       security:
         - X-Auth-Token: [ ]
+    delete:
+      tags:
+        - Post
+      summary: Delete post
+      description: Deletes a single post from the blog
+      operationId: deletePost
+      responses:
+        200:
+          description: Post successfully deleted
+        401:
+          description: Missing credentials
+        404:
+          description: Post doesn't exist
+      security:
+        - X-Auth-Token: [ ]
   /users:
     get:
       tags:
@@ -197,6 +212,21 @@ paths:
                 $ref: '#/components/schemas/User'
         401:
           description: Incorrect user name or password
+      security:
+        - X-Auth-Token: [ ]
+    delete:
+      tags:
+        - User
+      summary: Delete user
+      description: Deletes a single user from the blog
+      operationId: deleteUser
+      responses:
+        200:
+          description: User successfully deleted
+        401:
+          description: Missing credentials
+        404:
+          description: User doesn't exist
       security:
         - X-Auth-Token: [ ]
   /login:
