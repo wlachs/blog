@@ -40,6 +40,7 @@ func TestPostRepository_AddPost(t *testing.T) {
 
 	inputPost := repository.Post{
 		URLHandle: "testHandle",
+		AuthorID:  0,
 	}
 
 	expectedPost := &repository.Post{
@@ -56,7 +57,7 @@ func TestPostRepository_AddPost(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "url_handle"}).
 			AddRow(expectedPost.ID, expectedPost.URLHandle))
 
-	post, err := c.sut.AddPost(inputPost, 0)
+	post, err := c.sut.AddPost(inputPost)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, expectedPost.URLHandle, post.URLHandle, "received post should match the expected one")
@@ -69,6 +70,7 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 
 	inputPost := repository.Post{
 		URLHandle: "testHandle",
+		AuthorID:  0,
 	}
 
 	dbErr := fmt.Errorf("1062")
@@ -80,7 +82,7 @@ func TestPostRepository_AddPost_Duplicate_Post(t *testing.T) {
 	c.mockDb.ExpectExec(postQuery).WillReturnError(dbErr)
 	c.mockDb.ExpectRollback()
 
-	post, err := c.sut.AddPost(inputPost, 0)
+	post, err := c.sut.AddPost(inputPost)
 
 	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
@@ -93,6 +95,7 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 
 	inputPost := repository.Post{
 		URLHandle: "testHandle",
+		AuthorID:  0,
 	}
 
 	expectedError := fmt.Errorf("unexpected error")
@@ -103,7 +106,7 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 	c.mockDb.ExpectExec(postQuery).WillReturnError(expectedError)
 	c.mockDb.ExpectRollback()
 
-	post, err := c.sut.AddPost(inputPost, 0)
+	post, err := c.sut.AddPost(inputPost)
 
 	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
