@@ -103,7 +103,7 @@ func (u userRepository) DeleteUser(userName string) error {
 			log.Debugf("deleted user: %s", userName)
 			return nil
 		} else {
-			log.Debugf(result.Error.Error())
+			log.Debugf("failed to delete user: %v, user not found", user)
 			return errortypes.UserNotFoundError{UserName: userName}
 		}
 	} else {
