@@ -14,7 +14,7 @@ import (
 type Post struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement"`
 	URLHandle string `gorm:"unique;not null"`
-	AuthorID  uint   `gorm:"not null"`
+	AuthorID  uint
 	Author    User
 	Title     *string
 	Summary   *string
@@ -25,8 +25,9 @@ type Post struct {
 
 // PostRepository interface defining post-related database operations.
 type PostRepository interface {
-	AddPost(post Post, authorID uint) (Post, error)
+	AddPost(post Post) (Post, error)
 	UpdatePost(post Post) (Post, error)
+	DeletePost(urlHandle string) error
 	GetPost(urlHandle string) (Post, error)
 	GetPosts() ([]Post, error)
 }
@@ -56,20 +57,12 @@ func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 
 // AddPost adds a new post with the provided fields to the database.
 // The second parameter holds information about the author.
-func (p postRepository) AddPost(post Post, authorID uint) (Post, error) {
+func (p postRepository) AddPost(post Post) (Post, error) {
 	log := p.logger
 	repo := p.repository
 
-	newPost := Post{
-		URLHandle: post.URLHandle,
-		Title:     post.Title,
-		Summary:   post.Summary,
-		Body:      post.Body,
-		AuthorID:  authorID,
-	}
-
-	if result := repo.Create(&newPost); result.Error == nil {
-		log.Debugf("created post: %v", newPost)
+	if result := repo.Create(&post); result.Error == nil {
+		log.Debugf("created post: %v", post)
 		return p.GetPost(post.URLHandle)
 	} else if strings.Contains(result.Error.Error(), "1062") {
 		log.Debugf("failed to create post, duplicate key: %s, error: %v", post.URLHandle, result.Error)
@@ -89,7 +82,7 @@ func (p postRepository) UpdatePost(updatedPost Post) (Post, error) {
 		URLHandle: updatedPost.URLHandle,
 	}
 
-	if result := repo.Where(&post).Updates(updatedPost); result.RowsAffected == 1 {
+	if result := repo.Where(post).Updates(updatedPost); result.RowsAffected == 1 {
 		log.Debugf("updated post: %v", updatedPost)
 		return p.GetPost(post.URLHandle)
 	} else if result.RowsAffected == 0 {
@@ -97,6 +90,29 @@ func (p postRepository) UpdatePost(updatedPost Post) (Post, error) {
 	} else {
 		log.Debugf("failed to update post: %v, error: %s", post, result.Error)
 		return Post{}, result.Error
+	}
+}
+
+// DeletePost deletes a post with the provided post ID from the database.
+func (p postRepository) DeletePost(urlHandle string) error {
+	log := p.logger
+	repo := p.repository
+
+	post := Post{
+		URLHandle: urlHandle,
+	}
+
+	if result := repo.Where(post).Delete(post); result.Error == nil {
+		if result.RowsAffected > 0 {
+			log.Debugf("deleted post: %s", urlHandle)
+			return nil
+		} else {
+			log.Debugf(result.Error.Error())
+			return errortypes.PostNotFoundError{URLHandle: urlHandle}
+		}
+	} else {
+		log.Debugf("failed to delete post: %v, error: %s", post, result.Error)
+		return result.Error
 	}
 }
 

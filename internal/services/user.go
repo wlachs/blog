@@ -14,11 +14,12 @@ import (
 type UserService interface {
 	AuthenticateUser(userID string, password string) (string, error)
 	CheckUserPassword(userID string, password string) bool
-	GetUser(userName string) (repository.User, error)
+	GetUser(userID string) (repository.User, error)
 	GetUsers() ([]repository.User, error)
 	RegisterFirstUser() error
 	RegisterUser(userID string, password string) (repository.User, error)
 	UpdateUser(userID string, oldPassword string, newPassword string) (repository.User, error)
+	DeleteUser(userID string) error
 }
 
 // userService is the concrete implementation of the UserService interface.
@@ -165,4 +166,14 @@ func (u userService) UpdateUser(userID string, oldPassword string, newPassword s
 
 	log.Debugf("updated user: %s", user.UserName)
 	return updatedUser, nil
+}
+
+// DeleteUser receives a userID and deletes the user from the database
+// Before the user can be deleted, every authored post must be unassigned.
+func (u userService) DeleteUser(userID string) error {
+	log := u.cont.GetLogger()
+	userRepository := u.cont.GetUserRepository()
+
+	log.Debugf("deleting user: %s", userID)
+	return userRepository.DeleteUser(userID)
 }

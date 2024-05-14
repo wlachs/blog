@@ -11,6 +11,7 @@ import (
 type PostService interface {
 	AddPost(newPost repository.Post, authorName string) (repository.Post, error)
 	UpdatePost(updatedPost repository.Post) (repository.Post, error)
+	DeletePost(id string) error
 	GetPost(id string) (repository.Post, error)
 	GetPosts() ([]repository.Post, error)
 }
@@ -38,9 +39,10 @@ func (p postService) AddPost(newPost repository.Post, authorName string) (reposi
 		return repository.Post{}, err
 	}
 
-	log.Infof("adding new post %v with author %s", newPost, authorName)
+	newPost.AuthorID = author.ID
 
-	return postRepository.AddPost(newPost, author.ID)
+	log.Infof("adding new post %v with author %s", newPost, authorName)
+	return postRepository.AddPost(newPost)
 }
 
 // UpdatePost updates an existing post in the blog.
@@ -49,8 +51,16 @@ func (p postService) UpdatePost(updatedPost repository.Post) (repository.Post, e
 	postRepository := p.cont.GetPostRepository()
 
 	log.Infof("updating post %v", updatedPost)
-
 	return postRepository.UpdatePost(updatedPost)
+}
+
+// DeletePost deletes a post from the blog.
+func (p postService) DeletePost(urlHandle string) error {
+	log := p.cont.GetLogger()
+	postRepository := p.cont.GetPostRepository()
+
+	log.Infof("deleting post %s", urlHandle)
+	return postRepository.DeletePost(urlHandle)
 }
 
 // GetPost retrieves the post with the given URL handle.

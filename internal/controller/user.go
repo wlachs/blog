@@ -12,10 +12,11 @@ import (
 
 // UserController interface defining user-related middleware methods to handler HTTP requests.
 type UserController interface {
-	GetUser(c *gin.Context)
-	GetUsers(c *gin.Context)
 	AddUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
+	DeleteUser(c *gin.Context)
+	GetUser(c *gin.Context)
+	GetUsers(c *gin.Context)
 }
 
 // userController is a concrete implementation of the UserController interface.
@@ -27,40 +28,6 @@ type userController struct {
 // CreateUserController instantiates a user controller user the application container.
 func CreateUserController(cont container.Container, userService services.UserService) UserController {
 	return &userController{cont, userService}
-}
-
-// GetUser middleware. Top level handler of /user/:UserID GET requests.
-func (u userController) GetUser(c *gin.Context) {
-	userService := u.userService
-	userName, found := c.Params.Get("UserID")
-
-	if !found {
-		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUsernameError{})
-		return
-	}
-
-	user, err := userService.GetUser(userName)
-
-	switch err.(type) {
-	case nil:
-		c.IndentedJSON(http.StatusOK, populateUser(user))
-	case errortypes.UserNotFoundError:
-		_ = c.AbortWithError(http.StatusNotFound, err)
-	default:
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userName})
-	}
-}
-
-// GetUsers middleware. Top level handler of /users GET requests.
-func (u userController) GetUsers(c *gin.Context) {
-	userService := u.userService
-	users, err := userService.GetUsers()
-	if err != nil {
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{})
-		return
-	}
-
-	c.IndentedJSON(http.StatusOK, populateUsers(users))
 }
 
 // AddUser middleware. Top level handler of /users/:UserID POST requests.
@@ -108,6 +75,57 @@ func (u userController) UpdateUser(c *gin.Context) {
 	default:
 		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
 	}
+}
+
+// DeleteUser middleware. Top level handler of /users/:UserID DELETE requests.
+func (u userController) DeleteUser(c *gin.Context) {
+	userService := u.userService
+
+	userID, _ := c.Params.Get("UserID")
+	err := userService.DeleteUser(userID)
+
+	switch err.(type) {
+	case nil:
+		c.Status(http.StatusOK)
+	case errortypes.UserNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
+	}
+}
+
+// GetUser middleware. Top level handler of /user/:UserID GET requests.
+func (u userController) GetUser(c *gin.Context) {
+	userService := u.userService
+	userName, found := c.Params.Get("UserID")
+
+	if !found {
+		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUsernameError{})
+		return
+	}
+
+	user, err := userService.GetUser(userName)
+
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, populateUser(user))
+	case errortypes.UserNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userName})
+	}
+}
+
+// GetUsers middleware. Top level handler of /users GET requests.
+func (u userController) GetUsers(c *gin.Context) {
+	userService := u.userService
+	users, err := userService.GetUsers()
+	if err != nil {
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, populateUsers(users))
 }
 
 // populateUser maps a repository.User model to types.User

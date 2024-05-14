@@ -14,6 +14,7 @@ import (
 type PostController interface {
 	AddPost(c *gin.Context)
 	UpdatePost(c *gin.Context)
+	DeletePost(c *gin.Context)
 	GetPost(c *gin.Context)
 	GetPosts(c *gin.Context)
 }
@@ -88,6 +89,24 @@ func (controller postController) UpdatePost(c *gin.Context) {
 	switch err.(type) {
 	case nil:
 		c.IndentedJSON(http.StatusOK, populatePost(post))
+	case errortypes.PostNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{URLHandle: postID})
+	}
+}
+
+// DeletePost middleware. Top level handler of /posts/:PostID DELETE requests.
+func (controller postController) DeletePost(c *gin.Context) {
+	postService := controller.postService
+
+	// Set post ID from context
+	postID, _ := c.Params.Get("PostID")
+	err := postService.DeletePost(postID)
+
+	switch err.(type) {
+	case nil:
+		c.Status(http.StatusOK)
 	case errortypes.PostNotFoundError:
 		_ = c.AbortWithError(http.StatusNotFound, err)
 	default:

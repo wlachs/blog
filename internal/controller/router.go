@@ -26,12 +26,14 @@ func CreateRoutes(cont container.Container) {
 	router.GET("/api/v0/posts/:PostID", postCtrl.GetPost)
 	router.POST("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.AddPost)
 	router.PUT("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.UpdatePost)
+	router.DELETE("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.DeletePost)
 
 	// Users
 	router.GET("/api/v0/users", userCtrl.GetUsers)
 	router.GET("/api/v0/users/:UserID", userCtrl.GetUser)
 	router.POST("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.AddUser)
 	router.PUT("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.UpdateUser)
+	router.DELETE("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.DeleteUser)
 	router.POST("/api/v0/login", authCtrl.Login)
 
 	port := os.Getenv("PORT")
