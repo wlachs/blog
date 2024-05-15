@@ -1,0 +1,1 @@
+include .bingo/Variables.mk

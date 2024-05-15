@@ -11,6 +11,10 @@ jobs:
       - go/load-cache
       - go/mod-download
       - run:
+          name: Download bingo modules
+          command: |
+            make
+      - run:
           name: Generate mocks
           command: |
             go generate ./...
