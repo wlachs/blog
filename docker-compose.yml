@@ -23,3 +23,13 @@ services:
     ports:
       - "3306:3306"
     restart: unless-stopped
+  swagger-ui:
+    container_name: blog_swagger_ui
+    image: swaggerapi/swagger-ui
+    environment:
+      - SWAGGER_JSON=/tmp/swagger.yaml
+    volumes:
+      - ./api:/tmp
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
