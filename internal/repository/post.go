@@ -82,11 +82,13 @@ func (p postRepository) UpdatePost(updatedPost Post) (Post, error) {
 		URLHandle: updatedPost.URLHandle,
 	}
 
-	if result := repo.Where(post).Updates(updatedPost); result.RowsAffected == 1 {
-		log.Debugf("updated post: %v", updatedPost)
-		return p.GetPost(post.URLHandle)
-	} else if result.RowsAffected == 0 {
-		return Post{}, errortypes.PostNotFoundError{URLHandle: post.URLHandle}
+	if result := repo.Where(post).Updates(updatedPost); result.Error == nil {
+		if result.RowsAffected > 0 {
+			log.Debugf("updated post: %v", updatedPost)
+			return p.GetPost(post.URLHandle)
+		} else {
+			return Post{}, errortypes.PostNotFoundError{URLHandle: post.URLHandle}
+		}
 	} else {
 		log.Debugf("failed to update post: %v, error: %s", post, result.Error)
 		return Post{}, result.Error
@@ -107,7 +109,6 @@ func (p postRepository) DeletePost(urlHandle string) error {
 			log.Debugf("deleted post: %s", urlHandle)
 			return nil
 		} else {
-			log.Debugf(result.Error.Error())
 			return errortypes.PostNotFoundError{URLHandle: urlHandle}
 		}
 	} else {

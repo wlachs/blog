@@ -43,7 +43,7 @@ func TestPostRepository_AddPost(t *testing.T) {
 		AuthorID:  0,
 	}
 
-	expectedPost := &repository.Post{
+	expectedPost := repository.Post{
 		URLHandle: inputPost.URLHandle,
 	}
 
@@ -60,7 +60,7 @@ func TestPostRepository_AddPost(t *testing.T) {
 	post, err := c.sut.AddPost(inputPost)
 
 	assert.Nil(t, err, "should complete without error")
-	assert.Equal(t, expectedPost.URLHandle, post.URLHandle, "received post should match the expected one")
+	assert.Equal(t, expectedPost, post, "received post should match the expected one")
 }
 
 // TestPostRepository_AddPost_Duplicate_Post tests adding a new post to the system with an already existing URL handle
@@ -107,6 +107,97 @@ func TestPostRepository_AddPost_Unexpected_Error(t *testing.T) {
 	c.mockDb.ExpectRollback()
 
 	post, err := c.sut.AddPost(inputPost)
+
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
+// TestPostRepository_UpdatePost tests updating a post
+func TestPostRepository_UpdatePost(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	title := "newTitle"
+	summary := "newSummary"
+	body := "newBody"
+	inputPost := repository.Post{
+		URLHandle: "testHandle",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+	}
+
+	expectedPost := repository.Post{
+		URLHandle: inputPost.URLHandle,
+	}
+
+	postQuery := regexp.QuoteMeta("UPDATE `posts` SET `url_handle`=?,`title`=?,`summary`=?,`body`=?,`updated_at`=? WHERE `posts`.`url_handle` = ?")
+	query := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`url_handle` = ? LIMIT ?")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 1))
+	c.mockDb.ExpectCommit()
+	c.mockDb.ExpectQuery(query).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "url_handle"}).
+			AddRow(expectedPost.ID, expectedPost.URLHandle))
+
+	post, err := c.sut.UpdatePost(inputPost)
+
+	assert.Nil(t, err, "should complete without error")
+	assert.Equal(t, expectedPost, post, "received post should match the expected one")
+}
+
+// TestPostRepository_UpdatePost_Record_Not_Found tests updating a post non-existing post
+func TestPostRepository_UpdatePost_Record_Not_Found(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	title := "newTitle"
+	summary := "newSummary"
+	body := "newBody"
+	inputPost := repository.Post{
+		URLHandle: "testHandle",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+	}
+
+	postQuery := regexp.QuoteMeta("UPDATE `posts` SET `url_handle`=?,`title`=?,`summary`=?,`body`=?,`updated_at`=? WHERE `posts`.`url_handle` = ?")
+	expectedError := errortypes.PostNotFoundError{URLHandle: inputPost.URLHandle}
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 0))
+	c.mockDb.ExpectCommit()
+
+	post, err := c.sut.UpdatePost(inputPost)
+
+	assert.Equal(t, repository.Post{}, post, "should not return a post")
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
+// TestPostRepository_UpdatePost_Unexpected_Error tests updating a post with an error
+func TestPostRepository_UpdatePost_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	title := "newTitle"
+	summary := "newSummary"
+	body := "newBody"
+	inputPost := repository.Post{
+		URLHandle: "testHandle",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+	}
+
+	postQuery := regexp.QuoteMeta("UPDATE `posts` SET `url_handle`=?,`title`=?,`summary`=?,`body`=?,`updated_at`=? WHERE `posts`.`url_handle` = ?")
+	expectedError := fmt.Errorf("unexpected error")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnError(expectedError)
+	c.mockDb.ExpectRollback()
+
+	post, err := c.sut.UpdatePost(inputPost)
 
 	assert.Equal(t, repository.Post{}, post, "should not return a post")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
