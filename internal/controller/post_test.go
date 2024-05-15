@@ -179,7 +179,6 @@ func TestPostController_UpdatePost(t *testing.T) {
 	c := createPostControllerContext(t)
 
 	urlHandle := "testHandle"
-	author := "testAuthor"
 	title := "testTitle"
 	summary := "testSummary"
 	body := "testBody"
@@ -199,7 +198,6 @@ func TestPostController_UpdatePost(t *testing.T) {
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("UserID", author)
 	c.ctx.AddParam("PostID", urlHandle)
 	c.mockPostService.EXPECT().UpdatePost(postModel).Return(postModel, nil)
 
@@ -218,8 +216,6 @@ func TestPostController_UpdatePost_Invalid_Input(t *testing.T) {
 	t.Parallel()
 	c := createPostControllerContext(t)
 
-	c.ctx.Set("user", "testAuthor")
-
 	c.sut.UpdatePost(c.ctx)
 
 	errors := c.ctx.Errors.Errors()
@@ -235,7 +231,6 @@ func TestPostController_UpdatePost_Incorrect_Url_Handle(t *testing.T) {
 	title := "testTitle"
 	summary := "testSummary"
 	body := "testBody"
-	author := "testAuthor"
 	postModel := repository.Post{
 		URLHandle: "incorrectUrlHandle",
 		Title:     &title,
@@ -250,7 +245,6 @@ func TestPostController_UpdatePost_Incorrect_Url_Handle(t *testing.T) {
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("UserID", author)
 	c.ctx.AddParam("PostID", postModel.URLHandle)
 	expectedError := errortypes.PostNotFoundError{URLHandle: postModel.URLHandle}
 	c.mockPostService.EXPECT().UpdatePost(postModel).Return(repository.Post{}, expectedError)
@@ -295,12 +289,65 @@ func TestPostController_UpdatePost_Unexpected_Error(t *testing.T) {
 
 	test.MockJsonPost(c.ctx, input)
 
-	c.ctx.Set("UserID", postModel.Author.UserName)
 	c.ctx.AddParam("PostID", postModel.URLHandle)
 	expectedError := errortypes.UnexpectedPostError{URLHandle: postModel.URLHandle}
 	c.mockPostService.EXPECT().UpdatePost(inputModel).Return(repository.Post{}, fmt.Errorf("unexpected internal error"))
 
 	c.sut.UpdatePost(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_DeletePost tests deleting a post with valid input params.
+func TestPostController_DeletePost(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	urlHandle := "testHandle"
+
+	c.ctx.AddParam("PostID", urlHandle)
+	c.mockPostService.EXPECT().DeletePost(urlHandle).Return(nil)
+
+	c.sut.DeletePost(c.ctx)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_DeletePost_Incorrect_Url_Handle tests deleting a non-existing post.
+func TestPostController_DeletePost_Incorrect_Url_Handle(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	urlHandle := "testHandle"
+
+	c.ctx.AddParam("PostID", urlHandle)
+	expectedError := errortypes.PostNotFoundError{URLHandle: urlHandle}
+	c.mockPostService.EXPECT().DeletePost(urlHandle).Return(expectedError)
+
+	c.sut.DeletePost(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 404, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_DeletePost_Unexpected_Error tests handling unexpected errors while deleting a post.
+func TestPostController_DeletePost_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	urlHandle := "testHandle"
+
+	c.ctx.AddParam("PostID", urlHandle)
+	expectedError := errortypes.UnexpectedPostError{URLHandle: urlHandle}
+	c.mockPostService.EXPECT().DeletePost(urlHandle).Return(fmt.Errorf("unexpected internal error"))
+
+	c.sut.DeletePost(c.ctx)
 
 	errors := c.ctx.Errors.Errors()
 	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
