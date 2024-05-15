@@ -203,6 +203,62 @@ func TestPostRepository_UpdatePost_Unexpected_Error(t *testing.T) {
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
+// TestPostRepository_DeletePost tests deleting a post
+func TestPostRepository_DeletePost(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	urlHandle := "testHandle"
+
+	postQuery := regexp.QuoteMeta("DELETE FROM `posts` WHERE `posts`.`url_handle` = ?")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 1))
+	c.mockDb.ExpectCommit()
+
+	err := c.sut.DeletePost(urlHandle)
+
+	assert.Nil(t, err, "should complete without error")
+}
+
+// TestPostRepository_DeletePost_Record_Not_Found tests deleting a post non-existing post
+func TestPostRepository_DeletePost_Record_Not_Found(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	urlHandle := "testHandle"
+
+	postQuery := regexp.QuoteMeta("DELETE FROM `posts` WHERE `posts`.`url_handle` = ?")
+	expectedError := errortypes.PostNotFoundError{URLHandle: urlHandle}
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnResult(sqlmock.NewResult(0, 0))
+	c.mockDb.ExpectCommit()
+
+	err := c.sut.DeletePost(urlHandle)
+
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
+// TestPostRepository_DeletePost_Unexpected_Error tests deleting a post with an error
+func TestPostRepository_DeletePost_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createPostRepositoryContext(t)
+
+	urlHandle := "testHandle"
+
+	postQuery := regexp.QuoteMeta("DELETE FROM `posts` WHERE `posts`.`url_handle` = ?")
+	expectedError := fmt.Errorf("unexpected error")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(postQuery).WillReturnError(expectedError)
+	c.mockDb.ExpectRollback()
+
+	err := c.sut.DeletePost(urlHandle)
+
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
 // TestPostRepository_GetPost tests retrieving a single post from the database
 func TestPostRepository_GetPost(t *testing.T) {
 	t.Parallel()
