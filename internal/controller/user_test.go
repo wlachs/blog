@@ -416,6 +416,30 @@ func TestUserController_UpdateUser_Incorrect_Username(t *testing.T) {
 	assert.Equal(t, 401, c.rec.Code, "incorrect response status")
 }
 
+// TestUserController_UpdateUser_Invalid_Password tests updating a user's password with an invalid new password.
+func TestUserController_UpdateUser_Invalid_Password(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.UpdateUserJSONBody{
+		OldPassword: "oldPW",
+		NewPassword: "newPW",
+	}
+	expectedError := errortypes.PasswordHashingError{}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().UpdateUser(userName, input.OldPassword, input.NewPassword).Return(repository.User{}, expectedError)
+	c.sut.UpdateUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
 // TestUserController_UpdateUser_Unexpected_Error tests handling an unexpected error while updating a user's password.
 func TestUserController_UpdateUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
@@ -433,6 +457,60 @@ func TestUserController_UpdateUser_Unexpected_Error(t *testing.T) {
 	c.ctx.AddParam("UserID", userName)
 	c.mockUserService.EXPECT().UpdateUser(userName, input.OldPassword, input.NewPassword).Return(repository.User{}, fmt.Errorf("unexpected error"))
 	c.sut.UpdateUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_DeleteUser tests deleting a user.
+func TestUserController_DeleteUser(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().DeleteUser(userName).Return(nil)
+
+	c.sut.DeleteUser(c.ctx)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_DeleteUser_Record_Not_Found tests deleting a non-existing user.
+func TestUserController_DeleteUser_Record_Not_Found(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	expectedError := errortypes.UserNotFoundError{UserName: userName}
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().DeleteUser(userName).Return(expectedError)
+
+	c.sut.DeleteUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 404, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_DeleteUser_Unexpected_Error tests deleting a user while encountering an unexpected error.
+func TestUserController_DeleteUser_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	expectedError := errortypes.UnexpectedUserError{UserName: userName}
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().DeleteUser(userName).Return(fmt.Errorf("unexpected error"))
+
+	c.sut.DeleteUser(c.ctx)
 
 	errors := c.ctx.Errors.Errors()
 	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
