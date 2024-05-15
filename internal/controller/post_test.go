@@ -173,6 +173,141 @@ func TestPostController_AddPost_Unexpected_Error(t *testing.T) {
 	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
 }
 
+// TestPostController_UpdatePost tests updating a post with valid input params.
+func TestPostController_UpdatePost(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	urlHandle := "testHandle"
+	author := "testAuthor"
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
+
+	input := types.UpdatedPost{
+		Title:   &title,
+		Summary: &summary,
+		Body:    &body,
+	}
+
+	postModel := repository.Post{
+		URLHandle: urlHandle,
+		Title:     input.Title,
+		Summary:   input.Summary,
+		Body:      input.Body,
+	}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.Set("UserID", author)
+	c.ctx.AddParam("PostID", urlHandle)
+	c.mockPostService.EXPECT().UpdatePost(postModel).Return(postModel, nil)
+
+	c.sut.UpdatePost(c.ctx)
+
+	var output types.UpdatedPost
+	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, input, output, "response body should match")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_UpdatePost_Invalid_Input tests updating a post with invalid input params.
+func TestPostController_UpdatePost_Invalid_Input(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	c.ctx.Set("user", "testAuthor")
+
+	c.sut.UpdatePost(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_UpdatePost_Incorrect_Url_Handle tests updating a non-existing post.
+func TestPostController_UpdatePost_Incorrect_Url_Handle(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
+	author := "testAuthor"
+	postModel := repository.Post{
+		URLHandle: "incorrectUrlHandle",
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+	}
+	input := types.UpdatedPost{
+		Title:   postModel.Title,
+		Summary: postModel.Summary,
+		Body:    postModel.Body,
+	}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.Set("UserID", author)
+	c.ctx.AddParam("PostID", postModel.URLHandle)
+	expectedError := errortypes.PostNotFoundError{URLHandle: postModel.URLHandle}
+	c.mockPostService.EXPECT().UpdatePost(postModel).Return(repository.Post{}, expectedError)
+
+	c.sut.UpdatePost(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 404, c.rec.Code, "incorrect response status")
+}
+
+// TestPostController_UpdatePost_Unexpected_Error tests handling unexpected errors while updating a post.
+func TestPostController_UpdatePost_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createPostControllerContext(t)
+
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
+	userModel := repository.User{
+		UserName: "testAuthor",
+	}
+	postModel := repository.Post{
+		URLHandle: "testUrlHandle",
+		Author:    userModel,
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+	}
+	inputModel := repository.Post{
+		URLHandle: postModel.URLHandle,
+		Title:     postModel.Title,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
+	}
+	input := types.UpdatedPost{
+		Body:    postModel.Body,
+		Summary: postModel.Summary,
+		Title:   postModel.Title,
+	}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.Set("UserID", postModel.Author.UserName)
+	c.ctx.AddParam("PostID", postModel.URLHandle)
+	expectedError := errortypes.UnexpectedPostError{URLHandle: postModel.URLHandle}
+	c.mockPostService.EXPECT().UpdatePost(inputModel).Return(repository.Post{}, fmt.Errorf("unexpected internal error"))
+
+	c.sut.UpdatePost(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
+}
+
 // TestPostController_GetPost tests retrieving a single post by its URL handle from the blog.
 func TestPostController_GetPost(t *testing.T) {
 	t.Parallel()
