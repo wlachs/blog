@@ -39,6 +39,142 @@ func createUserControllerContext(t *testing.T) *userTestContext {
 	return &userTestContext{mockUserService, sut, ctx, rec}
 }
 
+// TestUserController_AddUser tests adding a new user.
+func TestUserController_AddUser(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.AddUserJSONBody{
+		Password: "testPassword",
+	}
+	userModel := repository.User{
+		UserName:     userName,
+		PasswordHash: "hash",
+	}
+	expectedOutput := types.User{
+		Posts:  nil,
+		UserID: userName,
+	}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().RegisterUser(userName, input.Password).Return(userModel, nil)
+
+	c.sut.AddUser(c.ctx)
+
+	var output types.User
+	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, expectedOutput, output, "response body should match")
+	assert.Equal(t, 201, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_AddUser_Invalid_Input tests adding a new user with invalid input.
+func TestUserController_AddUser_Invalid_Input(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	c.ctx.AddParam("UserID", userName)
+
+	c.sut.AddUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_AddUser_Missing_Password tests adding a new user with missing password.
+func TestUserController_AddUser_Missing_Password(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.AddUserJSONBody{}
+	expectedError := errortypes.MissingPasswordError{}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().RegisterUser(userName, input.Password).Return(repository.User{}, expectedError)
+
+	c.sut.AddUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_AddUser_Invalid_Password tests adding a new user with an invalid password.
+func TestUserController_AddUser_Invalid_Password(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.AddUserJSONBody{}
+	expectedError := errortypes.PasswordHashingError{}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().RegisterUser(userName, input.Password).Return(repository.User{}, expectedError)
+
+	c.sut.AddUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_AddUser_Duplicate_User tests adding a duplicate user.
+func TestUserController_AddUser_Duplicate_User(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.AddUserJSONBody{}
+	expectedError := errortypes.DuplicateElementError{Key: userName}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().RegisterUser(userName, input.Password).Return(repository.User{}, expectedError)
+
+	c.sut.AddUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 409, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_AddUser_Unexpected_Error tests adding a user while encountering an unexpected error.
+func TestUserController_AddUser_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+
+	userName := "testAuthor"
+	input := types.AddUserJSONBody{}
+	expectedError := errortypes.UnexpectedUserError{UserName: userName}
+
+	test.MockJsonPost(c.ctx, input)
+
+	c.ctx.AddParam("UserID", userName)
+	c.mockUserService.EXPECT().RegisterUser(userName, input.Password).Return(repository.User{}, fmt.Errorf("unexpected error"))
+
+	c.sut.AddUser(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
+}
+
 // TestUserController_GetUser tests retrieving a user from the blog.
 func TestUserController_GetUser(t *testing.T) {
 	t.Parallel()

@@ -48,6 +48,8 @@ func (u userController) AddUser(c *gin.Context) {
 		c.IndentedJSON(http.StatusCreated, populateUser(user))
 	case errortypes.MissingPasswordError:
 		_ = c.AbortWithError(http.StatusBadRequest, err)
+	case errortypes.PasswordHashingError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 	case errortypes.DuplicateElementError:
 		_ = c.AbortWithError(http.StatusConflict, err)
 	default:
@@ -72,6 +74,8 @@ func (u userController) UpdateUser(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, populateUser(user))
 	case errortypes.IncorrectUsernameOrPasswordError:
 		_ = c.AbortWithError(http.StatusUnauthorized, err)
+	case errortypes.PasswordHashingError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 	default:
 		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
 	}
