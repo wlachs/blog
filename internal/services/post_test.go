@@ -98,8 +98,8 @@ func TestPostService_AddPost_Invalid_User(t *testing.T) {
 	assert.NotEqual(t, newPost, p, "added user with incorrect data")
 }
 
-// TestPostService_Duplicate_Post tests adding a duplicate post to the blog.
-func TestPostService_Duplicate_Post(t *testing.T) {
+// TestPostService_AddPost_Duplicate_Post tests adding a duplicate post to the blog.
+func TestPostService_AddPost_Duplicate_Post(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
@@ -139,6 +139,62 @@ func TestPostService_Duplicate_Post(t *testing.T) {
 
 	assert.Equal(t, expectedError, err, "error doesn't match expected one")
 	assert.NotEqual(t, newPost, p, "added user with incorrect data")
+}
+
+// TestPostService_UpdatePost tests updating a post.
+func TestPostService_UpdatePost(t *testing.T) {
+	t.Parallel()
+	c := createPostServiceContext(t)
+
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
+	userModel := repository.User{
+		ID:       0,
+		UserName: "testAuthor",
+		Posts:    []repository.Post{},
+	}
+	postModel := repository.Post{
+		ID:        0,
+		URLHandle: "testUrlHandle",
+		AuthorID:  userModel.ID,
+		Author:    userModel,
+		Title:     &title,
+		Summary:   &summary,
+		Body:      &body,
+		CreatedAt: time.Time{}.Local(),
+		UpdatedAt: time.Time{}.Local(),
+	}
+	updatedPost := repository.Post{
+		URLHandle: postModel.URLHandle,
+		AuthorID:  userModel.ID,
+		Title:     postModel.Title,
+		Summary:   postModel.Summary,
+		Body:      postModel.Body,
+	}
+	dbErr := fmt.Errorf("error")
+
+	c.mostPostRepository.EXPECT().UpdatePost(updatedPost).Return(postModel, dbErr)
+
+	p, err := c.sut.UpdatePost(updatedPost)
+
+	assert.Equal(t, dbErr, err, "should forward DB error to controller")
+	assert.Equal(t, postModel, p, "added post doesn't match the input")
+}
+
+// TestPostService_DeletePost tests deleting a post.
+func TestPostService_DeletePost(t *testing.T) {
+	t.Parallel()
+	c := createPostServiceContext(t)
+
+	urlHandle := "testUrlHandle"
+	dbErr := fmt.Errorf("error")
+
+	c.mostPostRepository.EXPECT().DeletePost(urlHandle).Return(dbErr)
+
+	err := c.sut.DeletePost(urlHandle)
+
+	assert.Equal(t, dbErr, err, "should forward DB error to controller")
 }
 
 // TestPostService_GetPost tests getting a post from the blog.
