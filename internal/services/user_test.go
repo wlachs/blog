@@ -317,6 +317,22 @@ func TestUserService_RegisterUser_Invalid_Password(t *testing.T) {
 	assert.Equal(t, expectedError, err, "incorrect error type")
 }
 
+// TestUserService_RegisterUser_Missing_Password tests adding a new user to the system without a password.
+func TestUserService_RegisterUser_Missing_Password(t *testing.T) {
+	c := createUserServiceContext(t)
+
+	input := types.DoLoginJSONBody{
+		UserID:   "testAuthor",
+		Password: "",
+	}
+
+	expectedError := errortypes.MissingPasswordError{}
+
+	_, err := c.sut.RegisterUser(input.UserID, input.Password)
+
+	assert.Equal(t, expectedError, err, "incorrect error type")
+}
+
 // TestUserService_UpdateUser tests updating an existing user.
 func TestUserService_UpdateUser(t *testing.T) {
 	c := createUserServiceContext(t)
@@ -416,4 +432,18 @@ func TestUserService_UpdateUser_Unexpected_Error(t *testing.T) {
 	_, err := c.sut.UpdateUser(userID, oldPassword, newPassword)
 
 	assert.NotNil(t, err, "expected to receive an error")
+}
+
+// TestUserService_DeleteUser tests deleting an existing user.
+func TestUserService_DeleteUser(t *testing.T) {
+	c := createUserServiceContext(t)
+
+	userID := "testAuthor"
+	dbErr := fmt.Errorf("unexpected error")
+
+	c.mockUserRepository.EXPECT().DeleteUser(gomock.Any()).Return(dbErr)
+
+	err := c.sut.DeleteUser(userID)
+
+	assert.Equal(t, dbErr, err, "should forward DB error to controller")
 }
