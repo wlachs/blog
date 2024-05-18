@@ -1,31 +1,34 @@
 package repository
 
+//go:generate mockgen-v0.4.0 -source=post.go -destination=../mocks/mock_post_repository.go -package=mocks
+
 import (
-	"github.com/wlchs/blog/internal/types"
 	"go.uber.org/zap"
 	"strings"
 	"time"
 
-	"github.com/wlchs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/errortypes"
 )
 
 // Post DB schema
 type Post struct {
 	ID        uint   `gorm:"primaryKey;autoIncrement"`
 	URLHandle string `gorm:"unique;not null"`
-	AuthorID  uint   `gorm:"not null"`
+	AuthorID  uint
 	Author    User
-	Title     string
-	Summary   string
-	Body      string
+	Title     *string
+	Summary   *string
+	Body      *string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 // PostRepository interface defining post-related database operations.
 type PostRepository interface {
-	AddPost(post *types.Post, authorID uint) (*Post, error)
-	GetPost(urlHandle string) (*Post, error)
+	AddPost(post Post) (Post, error)
+	UpdatePost(post Post) (Post, error)
+	DeletePost(urlHandle string) error
+	GetPost(urlHandle string) (Post, error)
 	GetPosts() ([]Post, error)
 }
 
@@ -54,32 +57,68 @@ func initPostModel(logger *zap.SugaredLogger, repository Repository) {
 
 // AddPost adds a new post with the provided fields to the database.
 // The second parameter holds information about the author.
-func (p postRepository) AddPost(post *types.Post, authorID uint) (*Post, error) {
+func (p postRepository) AddPost(post Post) (Post, error) {
 	log := p.logger
 	repo := p.repository
 
-	newPost := Post{
-		URLHandle: post.URLHandle,
-		Title:     post.Title,
-		Summary:   post.Summary,
-		Body:      post.Body,
-		AuthorID:  authorID,
-	}
-
-	if result := repo.Create(&newPost); result.Error == nil {
-		log.Debugf("created post: %v", newPost)
-		return &newPost, nil
+	if result := repo.Create(&post); result.Error == nil {
+		log.Debugf("created post: %v", post)
+		return p.GetPost(post.URLHandle)
 	} else if strings.Contains(result.Error.Error(), "1062") {
 		log.Debugf("failed to create post, duplicate key: %s, error: %v", post.URLHandle, result.Error)
-		return nil, errortypes.DuplicateElementError{Key: post.URLHandle}
+		return Post{}, errortypes.DuplicateElementError{Key: post.URLHandle}
 	} else {
-		log.Debugf("failed to create post: %s, error: %s", post, result.Error)
-		return nil, result.Error
+		log.Debugf("failed to create post: %v, error: %s", post, result.Error)
+		return Post{}, result.Error
+	}
+}
+
+// UpdatePost updates an existing post with the provided fields to the database.
+func (p postRepository) UpdatePost(updatedPost Post) (Post, error) {
+	log := p.logger
+	repo := p.repository
+
+	post := Post{
+		URLHandle: updatedPost.URLHandle,
+	}
+
+	if result := repo.Where(post).Updates(updatedPost); result.Error == nil {
+		if result.RowsAffected > 0 {
+			log.Debugf("updated post: %v", updatedPost)
+			return p.GetPost(post.URLHandle)
+		} else {
+			return Post{}, errortypes.PostNotFoundError{URLHandle: post.URLHandle}
+		}
+	} else {
+		log.Debugf("failed to update post: %v, error: %s", post, result.Error)
+		return Post{}, result.Error
+	}
+}
+
+// DeletePost deletes a post with the provided post ID from the database.
+func (p postRepository) DeletePost(urlHandle string) error {
+	log := p.logger
+	repo := p.repository
+
+	post := Post{
+		URLHandle: urlHandle,
+	}
+
+	if result := repo.Where(post).Delete(post); result.Error == nil {
+		if result.RowsAffected > 0 {
+			log.Debugf("deleted post: %s", urlHandle)
+			return nil
+		} else {
+			return errortypes.PostNotFoundError{URLHandle: urlHandle}
+		}
+	} else {
+		log.Debugf("failed to delete post: %v, error: %s", post, result.Error)
+		return result.Error
 	}
 }
 
 // GetPost retrieves the post with the given URL-handle from the database.
-func (p postRepository) GetPost(urlHandle string) (*Post, error) {
+func (p postRepository) GetPost(urlHandle string) (Post, error) {
 	log := p.logger
 	repo := p.repository
 
@@ -92,13 +131,13 @@ func (p postRepository) GetPost(urlHandle string) (*Post, error) {
 	if result.Error != nil {
 		log.Debugf("failed to retrieve post with handle: %s, error: %v", urlHandle, result.Error)
 		if result.Error.Error() == "record not found" {
-			return nil, errortypes.PostNotFoundError{Post: types.Post{URLHandle: urlHandle}}
+			return Post{}, errortypes.PostNotFoundError{URLHandle: urlHandle}
 		}
-		return nil, result.Error
+		return Post{}, result.Error
 	}
 
 	log.Debugf("retrieved post: %v", post)
-	return &post, nil
+	return post, nil
 }
 
 // GetPosts retrieves every post from the database.

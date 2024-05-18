@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"github.com/wlchs/blog/internal/errortypes"
-	"github.com/wlchs/blog/internal/logger"
-	"github.com/wlchs/blog/internal/repository"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/logger"
+	"github.com/wlachs/blog/internal/repository"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"regexp"
@@ -39,7 +38,7 @@ func TestUserRepository_AddUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName: "testUser",
 	}
 
@@ -55,12 +54,36 @@ func TestUserRepository_AddUser(t *testing.T) {
 	assert.Equal(t, author.UserName, user.UserName, "received post should match the expected one")
 }
 
+// TestUserRepository_AddUser_Duplicate_User tests adding an already existing user to the system.
+func TestUserRepository_AddUser_Duplicate_User(t *testing.T) {
+	t.Parallel()
+	c := createUserRepositoryContext(t)
+
+	author := repository.User{
+		UserName: "testUser",
+	}
+
+	dbErr := fmt.Errorf("error 1062 (23000): duplicate entry")
+	expectedError := errortypes.DuplicateElementError{Key: author.UserName}
+
+	userQuery := regexp.QuoteMeta("INSERT INTO `users` (`user_name`,`password_hash`,`created_at`,`updated_at`) VALUES (?,?,?,?)")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(userQuery).WillReturnError(dbErr)
+	c.mockDb.ExpectRollback()
+
+	user, err := c.sut.AddUser(author)
+
+	assert.Equal(t, repository.User{}, user, "should not return a user")
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
 // TestUserRepository_AddUser_Unexpected_Error tests adding a new user to the system while encountering an unexpected error
 func TestUserRepository_AddUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName: "testUser",
 	}
 
@@ -74,7 +97,7 @@ func TestUserRepository_AddUser_Unexpected_Error(t *testing.T) {
 
 	user, err := c.sut.AddUser(author)
 
-	assert.Nil(t, user, "should not return a user")
+	assert.Equal(t, repository.User{}, user, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -83,12 +106,12 @@ func TestUserRepository_GetUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	expectedUser := &repository.User{
+	expectedUser := repository.User{
 		ID:       0,
 		UserName: "testUser",
 	}
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 
 	c.mockDb.ExpectQuery(query).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "user_name"}).
@@ -105,19 +128,17 @@ func TestUserRepository_GetUser_Record_Not_Found(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	expectedUser := types.User{
-		UserName: "testUser",
-	}
+	userName := "testUser"
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 	dbErr := fmt.Errorf("record not found")
-	expectedError := errortypes.UserNotFoundError{User: expectedUser}
+	expectedError := errortypes.UserNotFoundError{UserName: userName}
 
 	c.mockDb.ExpectQuery(query).WillReturnError(dbErr)
 
-	post, err := c.sut.GetUser(expectedUser.UserName)
+	post, err := c.sut.GetUser(userName)
 
-	assert.Nil(t, post, "should not return a user")
+	assert.Equal(t, repository.User{}, post, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -126,14 +147,14 @@ func TestUserRepository_GetUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT 1")
+	query := regexp.QuoteMeta("SELECT * FROM `users` WHERE `users`.`user_name` = ? LIMIT ?")
 	expectedError := fmt.Errorf("unexpected error")
 
 	c.mockDb.ExpectQuery(query).WillReturnError(expectedError)
 
 	post, err := c.sut.GetUser("test")
 
-	assert.Nil(t, post, "should not return a user")
+	assert.Equal(t, repository.User{}, post, "should not return a user")
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }
 
@@ -182,7 +203,7 @@ func TestUserRepository_UpdateUser(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName:     "testUser",
 		PasswordHash: "xxx",
 	}
@@ -204,7 +225,7 @@ func TestUserRepository_UpdateUser_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	author := &types.User{
+	author := repository.User{
 		UserName:     "testUser",
 		PasswordHash: "xxx",
 	}
@@ -219,6 +240,59 @@ func TestUserRepository_UpdateUser_Unexpected_Error(t *testing.T) {
 
 	user, err := c.sut.UpdateUser(author)
 
-	assert.Nil(t, user, "should not return a user")
+	assert.Equal(t, repository.User{}, user, "should not return a user")
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
+// TestUserRepository_DeleteUser tests deleting a user from the system without errors.
+func TestUserRepository_DeleteUser(t *testing.T) {
+	t.Parallel()
+	c := createUserRepositoryContext(t)
+
+	userQuery := regexp.QuoteMeta("DELETE FROM `users` WHERE `users`.`user_name` = ?")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(userQuery).WillReturnResult(sqlmock.NewResult(0, 1))
+	c.mockDb.ExpectCommit()
+
+	err := c.sut.DeleteUser("testUser")
+
+	assert.Nil(t, err, "should complete without error")
+}
+
+// TestUserRepository_DeleteUser_Record_Not_Found tests deleting a non-existing user from the system.
+func TestUserRepository_DeleteUser_Record_Not_Found(t *testing.T) {
+	t.Parallel()
+	c := createUserRepositoryContext(t)
+
+	userName := "testUser"
+	userQuery := regexp.QuoteMeta("DELETE FROM `users` WHERE `users`.`user_name` = ?")
+	expectedError := errortypes.UserNotFoundError{UserName: userName}
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(userQuery).WillReturnResult(sqlmock.NewResult(0, 0))
+	c.mockDb.ExpectCommit()
+
+	err := c.sut.DeleteUser(userName)
+
+	assert.Equal(t, expectedError, err, "received error should match the expected one")
+}
+
+// TestUserRepository_DeleteUser_Unexpected_Error tests deleting a user from the system while encountering an error.
+func TestUserRepository_DeleteUser_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createUserRepositoryContext(t)
+
+	userName := "testUser"
+	userQuery := regexp.QuoteMeta("DELETE FROM `users` WHERE `users`.`user_name` = ?")
+
+	expectedError := fmt.Errorf("unexpected error")
+
+	c.mockDb.ExpectBegin()
+	c.mockDb.ExpectExec(userQuery).WillReturnError(expectedError)
+	c.mockDb.ExpectRollback()
+
+	err := c.sut.DeleteUser(userName)
+
 	assert.Equal(t, expectedError, err, "received error should match the expected one")
 }

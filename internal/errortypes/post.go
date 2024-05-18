@@ -2,16 +2,15 @@ package errortypes
 
 import (
 	"fmt"
-	"github.com/wlchs/blog/internal/types"
 )
 
 type UnexpectedPostError struct {
-	Post types.Post
+	URLHandle string
 }
 
 func (e UnexpectedPostError) Error() string {
-	if e.Post.URLHandle != "" {
-		return fmt.Sprintf("unexpected error encountered with post \"%s\"", e.Post.URLHandle)
+	if e.URLHandle != "" {
+		return fmt.Sprintf("unexpected error encountered with post \"%s\"", e.URLHandle)
 	}
 	return "unexpected post error encountered"
 }
@@ -23,9 +22,9 @@ func (e MissingUrlHandleError) Error() string {
 }
 
 type PostNotFoundError struct {
-	Post types.Post
+	URLHandle string
 }
 
 func (e PostNotFoundError) Error() string {
-	return fmt.Sprintf("post with URL handle \"%s\" not found", e.Post.URLHandle)
+	return fmt.Sprintf("post with URL handle \"%s\" not found", e.URLHandle)
 }

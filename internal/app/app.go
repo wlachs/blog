@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/controller"
-	"github.com/wlchs/blog/internal/db"
-	"github.com/wlchs/blog/internal/jwt"
-	"github.com/wlchs/blog/internal/logger"
-	"github.com/wlchs/blog/internal/repository"
+	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/controller"
+	"github.com/wlachs/blog/internal/db"
+	"github.com/wlachs/blog/internal/jwt"
+	"github.com/wlachs/blog/internal/logger"
+	"github.com/wlachs/blog/internal/repository"
 )
 
 // Run initializes the application:

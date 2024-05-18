@@ -2,18 +2,21 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/errortypes"
-	"github.com/wlchs/blog/internal/services"
-	"github.com/wlchs/blog/internal/types"
+	"github.com/wlachs/blog/api/types"
+	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/errortypes"
+	"github.com/wlachs/blog/internal/repository"
+	"github.com/wlachs/blog/internal/services"
 	"net/http"
 )
 
 // UserController interface defining user-related middleware methods to handler HTTP requests.
 type UserController interface {
+	AddUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
+	DeleteUser(c *gin.Context)
 	GetUser(c *gin.Context)
 	GetUsers(c *gin.Context)
-	UpdateUser(c *gin.Context)
 }
 
 // userController is a concrete implementation of the UserController interface.
@@ -27,10 +30,78 @@ func CreateUserController(cont container.Container, userService services.UserSer
 	return &userController{cont, userService}
 }
 
-// GetUser middleware. Top level handler of /user/:userName GET requests.
+// AddUser middleware. Top level handler of /users/:UserID POST requests.
+// Registers a new user.
+func (u userController) AddUser(c *gin.Context) {
+	userService := u.userService
+
+	var p types.AddUserJSONBody
+	if err := c.BindJSON(&p); err != nil {
+		return
+	}
+
+	userID, _ := c.Params.Get("UserID")
+	user, err := userService.RegisterUser(userID, p.Password)
+
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusCreated, populateUser(user))
+	case errortypes.MissingPasswordError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	case errortypes.PasswordHashingError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	case errortypes.DuplicateElementError:
+		_ = c.AbortWithError(http.StatusConflict, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
+	}
+}
+
+// UpdateUser middleware. Top level handler of /users/:UserID PUT requests.
+func (u userController) UpdateUser(c *gin.Context) {
+	userService := u.userService
+
+	var p types.UpdateUserJSONBody
+	if err := c.BindJSON(&p); err != nil {
+		return
+	}
+
+	userID, _ := c.Params.Get("UserID")
+	user, err := userService.UpdateUser(userID, p.OldPassword, p.NewPassword)
+
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, populateUser(user))
+	case errortypes.IncorrectUsernameOrPasswordError:
+		_ = c.AbortWithError(http.StatusUnauthorized, err)
+	case errortypes.PasswordHashingError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
+	}
+}
+
+// DeleteUser middleware. Top level handler of /users/:UserID DELETE requests.
+func (u userController) DeleteUser(c *gin.Context) {
+	userService := u.userService
+
+	userID, _ := c.Params.Get("UserID")
+	err := userService.DeleteUser(userID)
+
+	switch err.(type) {
+	case nil:
+		c.Status(http.StatusOK)
+	case errortypes.UserNotFoundError:
+		_ = c.AbortWithError(http.StatusNotFound, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userID})
+	}
+}
+
+// GetUser middleware. Top level handler of /user/:UserID GET requests.
 func (u userController) GetUser(c *gin.Context) {
 	userService := u.userService
-	userName, found := c.Params.Get("userName")
+	userName, found := c.Params.Get("UserID")
 
 	if !found {
 		_ = c.AbortWithError(http.StatusBadRequest, errortypes.MissingUsernameError{})
@@ -38,15 +109,14 @@ func (u userController) GetUser(c *gin.Context) {
 	}
 
 	user, err := userService.GetUser(userName)
+
 	switch err.(type) {
 	case nil:
-		c.IndentedJSON(http.StatusOK, user)
-
+		c.IndentedJSON(http.StatusOK, populateUser(user))
 	case errortypes.UserNotFoundError:
 		_ = c.AbortWithError(http.StatusNotFound, err)
-
 	default:
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{User: types.User{UserName: userName}})
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{UserName: userName})
 	}
 }
 
@@ -59,35 +129,30 @@ func (u userController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, users)
+	c.IndentedJSON(http.StatusOK, populateUsers(users))
 }
 
-// UpdateUser middleware. Top level handler of /users/:userName PUT requests.
-func (u userController) UpdateUser(c *gin.Context) {
-	userService := u.userService
-
-	var p types.UserUpdateInput
-	if err := c.BindJSON(&p); err != nil {
-		return
+// populateUser maps a repository.User model to types.User
+func populateUser(user repository.User) types.User {
+	u := types.User{
+		UserID: user.UserName,
 	}
 
-	var oldUser types.UserLoginInput
-	oldUser.UserName, _ = c.Params.Get("userName")
-	oldUser.Password = p.OldPassword
-
-	var newUser types.UserLoginInput
-	newUser.UserName = oldUser.UserName
-	newUser.Password = p.NewPassword
-
-	user, err := userService.UpdateUser(&oldUser, &newUser)
-	switch err.(type) {
-	case nil:
-		c.IndentedJSON(http.StatusOK, user)
-
-	case errortypes.IncorrectUsernameOrPasswordError:
-		_ = c.AbortWithError(http.StatusUnauthorized, err)
-
-	default:
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{User: types.User{UserName: oldUser.UserName}})
+	if len(user.Posts) > 0 {
+		posts := populatePostMetadataSlice(user.Posts)
+		u.Posts = &posts
 	}
+
+	return u
+}
+
+// populateUsers maps a slice of repository.User models to a types.User slice
+func populateUsers(users []repository.User) []types.User {
+	u := make([]types.User, 0, len(users))
+
+	for _, user := range users {
+		u = append(u, populateUser(user))
+	}
+
+	return u
 }

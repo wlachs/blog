@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wlchs/blog/internal/container"
-	"github.com/wlchs/blog/internal/services"
+	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/services"
 	"os"
 )
 
@@ -22,15 +22,19 @@ func CreateRoutes(cont container.Container) {
 	userCtrl := CreateUserController(cont, userService)
 
 	// Posts
-	router.GET("/posts", postCtrl.GetPosts)
-	router.GET("/posts/:id", postCtrl.GetPost)
-	router.POST("/posts", authCtrl.Protect, postCtrl.AddPost)
+	router.GET("/api/v0/posts", postCtrl.GetPosts)
+	router.GET("/api/v0/posts/:PostID", postCtrl.GetPost)
+	router.POST("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.AddPost)
+	router.PUT("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.UpdatePost)
+	router.DELETE("/api/v0/posts/:PostID", authCtrl.Protect, postCtrl.DeletePost)
 
 	// Users
-	router.GET("/users", userCtrl.GetUsers)
-	router.GET("/users/:userName", userCtrl.GetUser)
-	router.PUT("/users/:userName", userCtrl.UpdateUser)
-	router.POST("/login", authCtrl.Login)
+	router.GET("/api/v0/users", userCtrl.GetUsers)
+	router.GET("/api/v0/users/:UserID", userCtrl.GetUser)
+	router.POST("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.AddUser)
+	router.PUT("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.UpdateUser)
+	router.DELETE("/api/v0/users/:UserID", authCtrl.Protect, userCtrl.DeleteUser)
+	router.POST("/api/v0/login", authCtrl.Login)
 
 	port := os.Getenv("PORT")
 	err := router.Run(":" + port)

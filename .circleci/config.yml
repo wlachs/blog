@@ -5,11 +5,19 @@ jobs:
   unit_tests:
     executor:
       name: go/default
-      tag: '1.21'
+      tag: '1.22'
     steps:
       - checkout
       - go/load-cache
       - go/mod-download
+      - run:
+          name: Download bingo modules
+          command: |
+            make install-tool-deps
+      - run:
+          name: Generate mocks
+          command: |
+            go generate ./...
       - go/save-cache
       - go/test:
           covermode: 'atomic'
@@ -19,11 +27,19 @@ jobs:
   lint:
     executor:
       name: go/default
-      tag: '1.21'
+      tag: '1.22'
     steps:
       - checkout
       - go/load-cache
       - go/mod-download
+      - run:
+          name: Download bingo modules
+          command: |
+            make install-tool-deps
+      - run:
+          name: Generate mocks
+          command: |
+            go generate ./...
       - go/save-cache
       - run:
           name: Run golangci-lint

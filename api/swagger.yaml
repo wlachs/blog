@@ -1,0 +1,377 @@
+openapi: 3.0.3
+info:
+  title: wlachs' blog
+  description: |-
+    This is a lightweight blog engine implemented in Go.
+  contact:
+    email: hello@laszloborbely.com
+  license:
+    name: MIT
+    url: https://github.com/wlachs/blog/blob/main/LICENSE
+  version: 0.1.0
+servers:
+  - url: https://laszloborbely.com/api/v0
+tags:
+  - name: Post
+    description: Everything about posts
+  - name: User
+    description: Operations with users
+  - name: Authentication
+    description: Authentication-related operations
+paths:
+  /posts:
+    get:
+      tags:
+        - Post
+      summary: Get all posts
+      description: Find and retrieve every post in the blog in chronologically reversed order
+      operationId: getPosts
+      responses:
+        200:
+          description: Successfully retrieved the posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+  /posts/{PostID}:
+    parameters:
+      - $ref: '#/components/parameters/PostID'
+    get:
+      tags:
+        - Post
+      summary: Get post by ID
+      description: Find and retrieve post with the given ID
+      operationId: getPostByID
+      responses:
+        200:
+          description: Successfully retrieved post with the given ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        404:
+          description: Post with the given ID not found
+    post:
+      tags:
+        - Post
+      summary: Add new post
+      description: Adds a new post to the system and automatically assigns is to the current user
+      operationId: addPost
+      requestBody:
+        $ref: '#/components/requestBodies/NewPost'
+      responses:
+        201:
+          description: Successfully added a new post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        401:
+          description: Missing credentials
+        409:
+          description: Another post with the same post ID already exists
+      security:
+        - X-Auth-Token: [ ]
+    put:
+      tags:
+        - Post
+      summary: Update post with ID
+      description: Update title, summary or body of the post identified by the post ID
+      operationId: updatePostByID
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatedPost'
+      responses:
+        200:
+          description: Successfully updated post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        401:
+          description: Missing credentials
+        404:
+          description: Post with the provided ID doesn't exist
+      security:
+        - X-Auth-Token: [ ]
+    delete:
+      tags:
+        - Post
+      summary: Delete post
+      description: Deletes a single post from the blog
+      operationId: deletePost
+      responses:
+        200:
+          description: Post successfully deleted
+        401:
+          description: Missing credentials
+        404:
+          description: Post doesn't exist
+      security:
+        - X-Auth-Token: [ ]
+  /users:
+    get:
+      tags:
+        - User
+      summary: Get all users
+      description: Retrieves every user of the blog
+      operationId: getUsers
+      responses:
+        200:
+          description: Successfully retrieved users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /users/{UserID}:
+    parameters:
+      - $ref: '#/components/parameters/UserID'
+    get:
+      tags:
+        - User
+      summary: Get user by ID
+      description: Find and retrieve user by the given ID
+      operationId: getUserByID
+      responses:
+        200:
+          description: Successfully retrieved user by ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404:
+          description: User with the provided ID not found
+    post:
+      tags:
+        - User
+      summary: Add new user
+      description: Add a new user to the blog with posting rights
+      operationId: addUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Password object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  description: User password
+                  format: password
+                  example: '*****'
+      responses:
+        201:
+          description: Successfully added new user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Missing credentials
+        409:
+          description: User with the provided ID already exists
+      security:
+        - X-Auth-Token: [ ]
+    put:
+      tags:
+        - User
+      summary: Change existing user
+      description: Change password of an existing user
+      operationId: updateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Password change object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  description: Old user password
+                  format: password
+                  example: Test1234
+                newPassword:
+                  type: string
+                  description: New user password
+                  format: password
+                  example: Test1234
+      responses:
+        200:
+          description: Successfully updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Incorrect user name or password
+      security:
+        - X-Auth-Token: [ ]
+    delete:
+      tags:
+        - User
+      summary: Delete user
+      description: Deletes a single user from the blog
+      operationId: deleteUser
+      responses:
+        200:
+          description: User successfully deleted
+        401:
+          description: Missing credentials
+        404:
+          description: User doesn't exist
+      security:
+        - X-Auth-Token: [ ]
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: Login endpoint
+      description: Endpoint that returns a valid API key if the user name and password are correct
+      operationId: doLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userID
+                - password
+              properties:
+                userID:
+                  type: string
+                  description: User identifier
+                  example: Laszlo
+                password:
+                  type: string
+                  description: User password
+                  example: Test1234
+                  format: password
+      responses:
+        200:
+          description: Login successful
+        401:
+          description: Incorrect user name or password
+components:
+  parameters:
+    PostID:
+      name: PostID
+      description: Unique post identifier shown in the URL
+      in: path
+      required: true
+      schema:
+        type: string
+    UserID:
+      name: UserID
+      description: Unique user identifier
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    PostMetadata:
+      type: object
+      description: Contains post metadata without the body
+      required:
+        - id
+        - title
+        - author
+        - creationTime
+      properties:
+        id:
+          type: string
+          description: Unique post identifier
+          example: interesting-post-title-in-url
+        title:
+          type: string
+          description: Post title
+          example: Interesting Post
+        author:
+          type: string
+          description: Name of the author
+          example: Laszlo
+        summary:
+          type: string
+          description: Short summary of the post. Typically not longer than a few sentences
+          example: Interesting Post Summary
+        creationTime:
+          type: string
+          format: date-time
+          description: Date when the post was created
+          example: "2023-11-21T22:55:30.335Z"
+    Post:
+      type: object
+      description: Post object containing the metadata and the body
+      required:
+        - metadata
+      allOf:
+        - $ref: '#/components/schemas/PostMetadata'
+        - type: object
+          properties:
+            body:
+              type: string
+              description: Post body. Only loaded when a post is explicitly requested
+              example: Post content in Markdown
+    NewPost:
+      type: object
+      description: Post object that needs to be added
+      required:
+        - title
+      allOf:
+        - $ref: '#/components/schemas/UpdatedPost'
+    UpdatedPost:
+      type: object
+      description: Post object that needs to be updated
+      properties:
+        title:
+          type: string
+          description: Post title
+          example: Interesting Post
+        summary:
+          type: string
+          description: Short summary of the post. Typically not longer than a few sentences
+          example: Interesting Post Summary
+        body:
+          type: string
+          description: Post body. Only loaded when a post is explicitly requested
+          example: Post content in Markdown
+    User:
+      type: object
+      description: Object representing a blog user
+      required:
+        - userID
+      properties:
+        userID:
+          type: string
+          description: Unique user identifier
+          example: Laszlo
+        posts:
+          type: array
+          description: Posts authored by the user
+          items:
+            $ref: '#/components/schemas/PostMetadata'
+  requestBodies:
+    NewPost:
+      description: Post object that needs to be added to the blog
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NewPost'
+    UpdatedPost:
+      description: Post object that needs to be added to the blog
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatedPost'
+  securitySchemes:
+    X-Auth-Token:
+      type: apiKey
+      name: X-Auth-Token
+      in: header

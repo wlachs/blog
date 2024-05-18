@@ -1,6 +1,6 @@
 package main
 
-import "github.com/wlchs/blog/internal/app"
+import "github.com/wlachs/blog/internal/app"
 
 // main entry point
 func main() {

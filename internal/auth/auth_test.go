@@ -1,7 +1,7 @@
 package auth_test
 
 import (
-	"github.com/wlchs/blog/internal/auth"
+	"github.com/wlachs/blog/internal/auth"
 	"testing"
 )
 
