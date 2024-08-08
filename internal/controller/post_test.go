@@ -470,20 +470,24 @@ func TestPostController_GetPosts(t *testing.T) {
 		},
 	}
 
-	expectedOutput := []types.PostMetadata{
-		{
-			Id:      urlHandle,
-			Title:   title,
-			Author:  userModel.UserName,
-			Summary: &summary,
+	pages := 1
+	expectedOutput := types.Posts{
+		Posts: &[]types.PostMetadata{
+			{
+				Id:      urlHandle,
+				Title:   title,
+				Author:  userModel.UserName,
+				Summary: &summary,
+			},
 		},
+		Pages: &pages,
 	}
 
-	c.mockPostService.EXPECT().GetPosts().Return(postModels, nil)
+	c.mockPostService.EXPECT().GetPosts().Return(postModels, pages, nil)
 
 	c.sut.GetPosts(c.ctx)
 
-	var output []types.PostMetadata
+	var output types.Posts
 	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
 
 	assert.Nil(t, c.ctx.Errors, "expected no errors")
@@ -515,20 +519,24 @@ func TestPostController_GetPostsPage(t *testing.T) {
 		},
 	}
 
-	expectedOutput := []types.PostMetadata{
-		{
-			Id:      urlHandle,
-			Title:   title,
-			Author:  userModel.UserName,
-			Summary: &summary,
+	pages := 1
+	expectedOutput := types.Posts{
+		Posts: &[]types.PostMetadata{
+			{
+				Id:      urlHandle,
+				Title:   title,
+				Author:  userModel.UserName,
+				Summary: &summary,
+			},
 		},
+		Pages: &pages,
 	}
 
-	c.mockPostService.EXPECT().GetPostsPage(2).Return(postModels, nil)
+	c.mockPostService.EXPECT().GetPostsPage(2).Return(postModels, pages, nil)
 
 	c.sut.GetPosts(c.ctx)
 
-	var output []types.PostMetadata
+	var output types.Posts
 	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
 
 	assert.Nil(t, c.ctx.Errors, "expected no errors")
@@ -560,20 +568,24 @@ func TestPostController_GetPosts_Invalid_Page(t *testing.T) {
 		},
 	}
 
-	expectedOutput := []types.PostMetadata{
-		{
-			Id:      urlHandle,
-			Title:   title,
-			Author:  userModel.UserName,
-			Summary: &summary,
+	pages := 1
+	expectedOutput := types.Posts{
+		Posts: &[]types.PostMetadata{
+			{
+				Id:      urlHandle,
+				Title:   title,
+				Author:  userModel.UserName,
+				Summary: &summary,
+			},
 		},
+		Pages: &pages,
 	}
 
-	c.mockPostService.EXPECT().GetPosts().Return(postModels, nil)
+	c.mockPostService.EXPECT().GetPosts().Return(postModels, pages, nil)
 
 	c.sut.GetPosts(c.ctx)
 
-	var output []types.PostMetadata
+	var output types.Posts
 	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
 
 	assert.Nil(t, c.ctx.Errors, "expected no errors")
@@ -590,7 +602,7 @@ func TestPostController_GetPosts_Negative_Page(t *testing.T) {
 
 	expectedError := errortypes.InvalidPostPageError{Page: -1}
 
-	c.mockPostService.EXPECT().GetPostsPage(-1).Return(nil, expectedError)
+	c.mockPostService.EXPECT().GetPostsPage(-1).Return(nil, -1, expectedError)
 
 	c.sut.GetPosts(c.ctx)
 
@@ -607,7 +619,7 @@ func TestPostController_GetPosts_Unexpected_Error(t *testing.T) {
 	c := createPostControllerContext(t)
 	expectedError := errortypes.UnexpectedPostError{}
 
-	c.mockPostService.EXPECT().GetPosts().Return(nil, fmt.Errorf("unexpected error"))
+	c.mockPostService.EXPECT().GetPosts().Return(nil, -1, fmt.Errorf("unexpected error"))
 
 	c.sut.GetPosts(c.ctx)
 
