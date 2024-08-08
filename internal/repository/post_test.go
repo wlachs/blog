@@ -330,7 +330,7 @@ func TestPostRepository_GetPosts(t *testing.T) {
 			AddRow(1, "test_1").
 			AddRow(2, "test_2"))
 
-	posts, err := c.sut.GetPosts(2, 3)
+	posts, _, err := c.sut.GetPosts(2, 3)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, 2, len(posts), "didn't receive the expected number of posts")
@@ -346,7 +346,7 @@ func TestPostRepository_GetPosts_Unexpected_Error(t *testing.T) {
 
 	c.mockDb.ExpectQuery(query).WillReturnError(expectedError)
 
-	posts, err := c.sut.GetPosts(1, 1)
+	posts, _, err := c.sut.GetPosts(1, 1)
 
 	assert.Equal(t, expectedError, err, "error should match expected value")
 	assert.Equal(t, 0, len(posts), "shouldn't receive any posts")

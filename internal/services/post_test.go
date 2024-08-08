@@ -289,9 +289,9 @@ func TestPostService_GetPosts(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, nil)
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, 1, nil)
 
-	p, err := c.sut.GetPosts()
+	p, _, err := c.sut.GetPosts()
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
@@ -302,8 +302,8 @@ func TestPostService_GetPosts_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
-	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, fmt.Errorf("error"))
-	_, err := c.sut.GetPosts()
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, -1, fmt.Errorf("error"))
+	_, _, err := c.sut.GetPosts()
 
 	assert.NotNil(t, err, "expected error")
 }
@@ -347,9 +347,9 @@ func TestPostService_GetPostsPage(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, nil)
+	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, 2, nil)
 
-	p, err := c.sut.GetPostsPage(2)
+	p, _, err := c.sut.GetPostsPage(2)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
@@ -361,7 +361,7 @@ func TestPostService_GetPostsPage_Invalid_Page(t *testing.T) {
 	c := createPostServiceContext(t)
 
 	expectedError := errortypes.InvalidPostPageError{Page: -2}
-	_, err := c.sut.GetPostsPage(-2)
+	_, _, err := c.sut.GetPostsPage(-2)
 
 	assert.Equal(t, expectedError, err, "error doesn't match expected one")
 }
