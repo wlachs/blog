@@ -40,9 +40,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Post'
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+                  pages:
+                    type: integer
   /posts/{PostID}:
     parameters:
       - $ref: '#/components/parameters/PostID'
@@ -139,9 +144,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pages:
+                    type: integer
   /users/{UserID}:
     parameters:
       - $ref: '#/components/parameters/UserID'
