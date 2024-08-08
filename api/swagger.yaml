@@ -8,7 +8,7 @@ info:
   license:
     name: MIT
     url: https://github.com/wlachs/blog/blob/main/LICENSE
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: https://laszloborbely.com/api/v0
 tags:
@@ -26,6 +26,14 @@ paths:
       summary: Get all posts
       description: Find and retrieve every post in the blog in chronologically reversed order
       operationId: getPosts
+      parameters:
+        - name: page
+          in: path
+          description: Page number
+          schema:
+            type: integer
+            format: int32
+            default: 1
       responses:
         200:
           description: Successfully retrieved the posts
@@ -117,6 +125,14 @@ paths:
       summary: Get all users
       description: Retrieves every user of the blog
       operationId: getUsers
+      parameters:
+        - name: page
+          in: path
+          description: Page number
+          schema:
+            type: integer
+            format: int32
+            default: 1
       responses:
         200:
           description: Successfully retrieved users
