@@ -54,3 +54,11 @@ func (e UnexpectedUserError) Error() string {
 	}
 	return "unexpected user error encountered"
 }
+
+type InvalidUserPageError struct {
+	Page int
+}
+
+func (e InvalidUserPageError) Error() string {
+	return fmt.Sprintf("user page with number %d not valid", e.Page)
+}

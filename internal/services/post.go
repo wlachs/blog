@@ -4,6 +4,7 @@ package services
 
 import (
 	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/repository"
 )
 
@@ -77,6 +78,13 @@ func (p postService) GetPosts() ([]repository.Post, error) {
 
 // GetPostsPage retrieves one page of posts of the blog.
 func (p postService) GetPostsPage(page int) ([]repository.Post, error) {
+	log := p.cont.GetLogger()
 	postRepository := p.cont.GetPostRepository()
-	return postRepository.GetPosts()
+
+	if page < 1 {
+		log.Errorf("invalid post page number %d", page)
+		return nil, errortypes.InvalidPostPageError{Page: page}
+	}
+
+	return postRepository.GetPosts(page)
 }
