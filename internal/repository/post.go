@@ -159,7 +159,7 @@ func (p postRepository) GetPosts(pageIndex int, pageSize int) ([]Post, int, erro
 	}
 
 	var count int64
-	repo.Model(&User{}).Count(&count)
+	repo.Model(&Post{}).Count(&count)
 
 	log.Debugf("fetched posts: %v, item count %d", posts, count)
 	return posts, int(count), nil
