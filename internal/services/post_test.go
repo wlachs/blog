@@ -297,6 +297,17 @@ func TestPostService_GetPosts(t *testing.T) {
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
 }
 
+// TestPostService_GetPosts_Unexpected_Error tests handling an unexpected error while getting posts
+func TestPostService_GetPosts_Unexpected_Error(t *testing.T) {
+	t.Parallel()
+	c := createPostServiceContext(t)
+
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, fmt.Errorf("error"))
+	_, err := c.sut.GetPosts()
+
+	assert.NotNil(t, err, "expected error")
+}
+
 // TestPostService_GetPostsPage tests getting a specific page of posts from the blog.
 func TestPostService_GetPostsPage(t *testing.T) {
 	t.Parallel()
@@ -353,15 +364,4 @@ func TestPostService_GetPostsPage_Invalid_Page(t *testing.T) {
 	_, err := c.sut.GetPostsPage(-2)
 
 	assert.Equal(t, expectedError, err, "error doesn't match expected one")
-}
-
-// TestPostService_GetPosts_Unexpected_Error tests handling an unexpected error while getting posts
-func TestPostService_GetPosts_Unexpected_Error(t *testing.T) {
-	t.Parallel()
-	c := createPostServiceContext(t)
-
-	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, fmt.Errorf("error"))
-	_, err := c.sut.GetPosts()
-
-	assert.NotNil(t, err, "expected error")
 }

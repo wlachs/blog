@@ -16,6 +16,7 @@ type UserService interface {
 	CheckUserPassword(userID string, password string) bool
 	GetUser(userID string) (repository.User, error)
 	GetUsers() ([]repository.User, error)
+	GetUsersPage(page int) ([]repository.User, error)
 	RegisterFirstUser() error
 	RegisterUser(userID string, password string) (repository.User, error)
 	UpdateUser(userID string, oldPassword string, newPassword string) (repository.User, error)
@@ -26,6 +27,9 @@ type UserService interface {
 type userService struct {
 	cont container.Container
 }
+
+// userPageSize sets the pagination page size
+const userPageSize = 5
 
 // CreateUserService instantiates the userService using the application container.
 func CreateUserService(cont container.Container) UserService {
@@ -83,10 +87,22 @@ func (u userService) GetUser(userID string) (repository.User, error) {
 	return userRepository.GetUser(userID)
 }
 
-// GetUsers retrieves every user and maps them to a slice of user data objects.
+// GetUsers retrieves the first page of users and maps them to a slice of user data objects.
 func (u userService) GetUsers() ([]repository.User, error) {
+	return u.GetUsersPage(1)
+}
+
+// GetUsersPage retrieves a specific page of users and maps them to a slice of user data objects.
+func (u userService) GetUsersPage(page int) ([]repository.User, error) {
+	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
-	return userRepository.GetUsers()
+
+	if page < 1 {
+		log.Errorf("invalid user page number %d", page)
+		return nil, errortypes.InvalidUserPageError{Page: page}
+	}
+
+	return userRepository.GetUsers(page, userPageSize)
 }
 
 // RegisterFirstUser creates the main user if it doesn't exist yet.

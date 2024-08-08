@@ -25,7 +25,7 @@ type UserRepository interface {
 	UpdateUser(user User) (User, error)
 	DeleteUser(userName string) error
 	GetUser(userName string) (User, error)
-	GetUsers() ([]User, error)
+	GetUsers(pageIndex int, pageSize int) ([]User, error)
 }
 
 // userRepository is the concrete implementation of the UserRepository interface
@@ -137,13 +137,18 @@ func (u userRepository) GetUser(userName string) (User, error) {
 	return user, nil
 }
 
-// GetUsers retrieves every user from the database.
-func (u userRepository) GetUsers() ([]User, error) {
+// GetUsers retrieves a specific page of users from the database.
+func (u userRepository) GetUsers(pageIndex int, pageSize int) ([]User, error) {
 	log := u.logger
 	repo := u.repository
 
 	var users []User
-	if result := repo.Preload("Posts").Find(&users); result.Error != nil {
+	result := repo.Preload("Posts").
+		Limit(pageSize).
+		Offset((pageIndex - 1) * pageSize).
+		Find(&users)
+
+	if result.Error != nil {
 		log.Debugf("failed to retrieve users: %v", result.Error)
 		return []User{}, result.Error
 	}
