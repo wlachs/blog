@@ -23,6 +23,9 @@ type postService struct {
 	cont container.Container
 }
 
+// postPageSize sets the pagination page size
+const postPageSize = 5
+
 // CreatePostService instantiates the postService using the application container.
 func CreatePostService(cont container.Container) PostService {
 	return &postService{cont}
@@ -86,5 +89,5 @@ func (p postService) GetPostsPage(page int) ([]repository.Post, error) {
 		return nil, errortypes.InvalidPostPageError{Page: page}
 	}
 
-	return postRepository.GetPosts(page)
+	return postRepository.GetPosts(page, postPageSize)
 }

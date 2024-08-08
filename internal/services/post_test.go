@@ -289,7 +289,7 @@ func TestPostService_GetPosts(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(1).Return(postModels, nil)
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, nil)
 
 	p, err := c.sut.GetPosts()
 
@@ -336,7 +336,7 @@ func TestPostService_GetPostsPage(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(2).Return(postModels, nil)
+	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, nil)
 
 	p, err := c.sut.GetPostsPage(2)
 
@@ -360,7 +360,7 @@ func TestPostService_GetPosts_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
-	c.mostPostRepository.EXPECT().GetPosts(1).Return(nil, fmt.Errorf("error"))
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, fmt.Errorf("error"))
 	_, err := c.sut.GetPosts()
 
 	assert.NotNil(t, err, "expected error")

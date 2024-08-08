@@ -29,7 +29,7 @@ type PostRepository interface {
 	UpdatePost(post Post) (Post, error)
 	DeletePost(urlHandle string) error
 	GetPost(urlHandle string) (Post, error)
-	GetPosts(page int) ([]Post, error)
+	GetPosts(pageIndex int, pageSize int) ([]Post, error)
 }
 
 // postRepository is the concrete implementation of the PostRepository interface.
@@ -141,7 +141,7 @@ func (p postRepository) GetPost(urlHandle string) (Post, error) {
 }
 
 // GetPosts retrieves a specific page of posts from the database.
-func (p postRepository) GetPosts(page int) ([]Post, error) {
+func (p postRepository) GetPosts(pageIndex int, pageSize int) ([]Post, error) {
 	log := p.logger
 	repo := p.repository
 
