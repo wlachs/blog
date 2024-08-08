@@ -223,12 +223,13 @@ func TestUserService_GetUsers(t *testing.T) {
 		},
 	}
 
-	c.mockUserRepository.EXPECT().GetUsers(1, 5).Return(userModels, 1, nil)
+	c.mockUserRepository.EXPECT().GetUsers(1, 5).Return(userModels, 5, nil)
 
-	users, _, err := c.sut.GetUsers()
+	users, pages, err := c.sut.GetUsers()
 
 	assert.Nil(t, err, "expected to complete without error")
 	assert.Equal(t, userModels, users, "response doesn't match expected user data")
+	assert.Equal(t, 1, pages, "incorrect page count")
 }
 
 // TestUserService_GetUsers_Unexpected_Error tests handling an unexpected error while getting every user of the blog.
@@ -266,12 +267,13 @@ func TestUserService_GetUsersPage(t *testing.T) {
 		},
 	}
 
-	c.mockUserRepository.EXPECT().GetUsers(2, 5).Return(userModels, 2, nil)
+	c.mockUserRepository.EXPECT().GetUsers(2, 5).Return(userModels, 6, nil)
 
-	users, _, err := c.sut.GetUsersPage(2)
+	users, pages, err := c.sut.GetUsersPage(2)
 
 	assert.Nil(t, err, "expected to complete without error")
 	assert.Equal(t, userModels, users, "response doesn't match expected user data")
+	assert.Equal(t, 2, pages, "incorrect page count")
 }
 
 // TestUserService_GetUsersPage_Invalid_Page tests getting a specific page of users of the blog with a negative page number.

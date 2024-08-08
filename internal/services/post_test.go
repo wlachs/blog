@@ -289,12 +289,13 @@ func TestPostService_GetPosts(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, 1, nil)
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, 5, nil)
 
-	p, _, err := c.sut.GetPosts()
+	p, pages, err := c.sut.GetPosts()
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
+	assert.Equal(t, 1, pages, "incorrect page count")
 }
 
 // TestPostService_GetPosts_Unexpected_Error tests handling an unexpected error while getting posts
@@ -347,12 +348,13 @@ func TestPostService_GetPostsPage(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, 2, nil)
+	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, 6, nil)
 
-	p, _, err := c.sut.GetPostsPage(2)
+	p, pages, err := c.sut.GetPostsPage(2)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
+	assert.Equal(t, 2, pages, "incorrect page count")
 }
 
 // TestPostService_GetPostsPage_Invalid_Page tests getting a specific page of posts from the blog with a negative page number.
