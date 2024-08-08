@@ -289,12 +289,13 @@ func TestPostService_GetPosts(t *testing.T) {
 		},
 	}
 
-	c.mostPostRepository.EXPECT().GetPosts().Return(postModels, nil)
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(postModels, 5, nil)
 
-	p, err := c.sut.GetPosts()
+	p, pages, err := c.sut.GetPosts()
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, posts, p, "post doesn't match the expected output")
+	assert.Equal(t, 1, pages, "incorrect page count")
 }
 
 // TestPostService_GetPosts_Unexpected_Error tests handling an unexpected error while getting posts
@@ -302,8 +303,67 @@ func TestPostService_GetPosts_Unexpected_Error(t *testing.T) {
 	t.Parallel()
 	c := createPostServiceContext(t)
 
-	c.mostPostRepository.EXPECT().GetPosts().Return(nil, fmt.Errorf("error"))
-	_, err := c.sut.GetPosts()
+	c.mostPostRepository.EXPECT().GetPosts(1, 5).Return(nil, -1, fmt.Errorf("error"))
+	_, _, err := c.sut.GetPosts()
 
 	assert.NotNil(t, err, "expected error")
+}
+
+// TestPostService_GetPostsPage tests getting a specific page of posts from the blog.
+func TestPostService_GetPostsPage(t *testing.T) {
+	t.Parallel()
+	c := createPostServiceContext(t)
+
+	title := "testTitle"
+	summary := "testSummary"
+	body := "testBody"
+	userModel := repository.User{
+		ID:       0,
+		UserName: "testAuthor",
+		Posts:    []repository.Post{},
+	}
+	postModels := []repository.Post{
+		{
+			ID:        0,
+			URLHandle: "testUrlHandle",
+			AuthorID:  userModel.ID,
+			Author:    userModel,
+			Title:     &title,
+			Summary:   &summary,
+			Body:      &body,
+			CreatedAt: time.Time{}.Local(),
+			UpdatedAt: time.Time{}.Local(),
+		},
+	}
+
+	posts := []repository.Post{
+		{
+			URLHandle: postModels[0].URLHandle,
+			Title:     postModels[0].Title,
+			Author:    userModel,
+			Summary:   postModels[0].Summary,
+			CreatedAt: postModels[0].CreatedAt,
+			UpdatedAt: postModels[0].UpdatedAt,
+			Body:      postModels[0].Body,
+		},
+	}
+
+	c.mostPostRepository.EXPECT().GetPosts(2, 5).Return(postModels, 6, nil)
+
+	p, pages, err := c.sut.GetPostsPage(2)
+
+	assert.Nil(t, err, "should complete without error")
+	assert.Equal(t, posts, p, "post doesn't match the expected output")
+	assert.Equal(t, 2, pages, "incorrect page count")
+}
+
+// TestPostService_GetPostsPage_Invalid_Page tests getting a specific page of posts from the blog with a negative page number.
+func TestPostService_GetPostsPage_Invalid_Page(t *testing.T) {
+	t.Parallel()
+	c := createPostServiceContext(t)
+
+	expectedError := errortypes.InvalidPostPageError{Page: -2}
+	_, _, err := c.sut.GetPostsPage(-2)
+
+	assert.Equal(t, expectedError, err, "error doesn't match expected one")
 }

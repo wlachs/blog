@@ -8,6 +8,7 @@ import (
 	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/services"
 	"net/http"
+	"strconv"
 )
 
 // UserController interface defining user-related middleware methods to handler HTTP requests.
@@ -123,13 +124,28 @@ func (u userController) GetUser(c *gin.Context) {
 // GetUsers middleware. Top level handler of /users GET requests.
 func (u userController) GetUsers(c *gin.Context) {
 	userService := u.userService
-	users, err := userService.GetUsers()
+	page := c.Query("page")
+	pageId, err := strconv.Atoi(page)
+
+	var users []repository.User
+	var pages int
+
+	// If no page query is provided, call the default service
 	if err != nil {
-		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{})
-		return
+		users, pages, err = userService.GetUsers()
+	} else {
+		users, pages, err = userService.GetUsersPage(pageId)
 	}
 
-	c.IndentedJSON(http.StatusOK, populateUsers(users))
+	switch err.(type) {
+	case nil:
+		us := populateUsers(users)
+		c.IndentedJSON(http.StatusOK, types.Users{Users: &us, Pages: &pages})
+	case errortypes.InvalidUserPageError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	default:
+		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedUserError{})
+	}
 }
 
 // populateUser maps a repository.User model to types.User

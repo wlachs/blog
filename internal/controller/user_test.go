@@ -15,6 +15,7 @@ import (
 	"github.com/wlachs/blog/internal/test"
 	"go.uber.org/mock/gomock"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -251,7 +252,7 @@ func TestUserController_GetUser_Unexpected_Error(t *testing.T) {
 	assert.Equal(t, 500, c.rec.Code, "incorrect response status")
 }
 
-// TestUserController_GetUsers tests retrieving every user from the blog.
+// TestUserController_GetUsers tests the first page of users from the blog.
 func TestUserController_GetUsers(t *testing.T) {
 	t.Parallel()
 	c := createUserControllerContext(t)
@@ -275,34 +276,178 @@ func TestUserController_GetUsers(t *testing.T) {
 			},
 		},
 	}
-	expectedOutput := []types.User{
-		{
-			UserID: userModels[0].UserName,
-			Posts: &[]types.PostMetadata{
-				{
-					Id:     userModels[0].Posts[0].URLHandle,
-					Author: userModels[0].UserName,
-					Title:  title1,
-				},
-				{
-					Id:     userModels[0].Posts[1].URLHandle,
-					Author: userModels[0].UserName,
-					Title:  title2,
+
+	pages := 1
+	expectedOutput := types.Users{
+		Users: &[]types.User{
+			{
+				UserID: userModels[0].UserName,
+				Posts: &[]types.PostMetadata{
+					{
+						Id:     userModels[0].Posts[0].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title1,
+					},
+					{
+						Id:     userModels[0].Posts[1].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title2,
+					},
 				},
 			},
 		},
+		Pages: &pages,
 	}
 
-	c.mockUserService.EXPECT().GetUsers().Return(userModels, nil)
+	c.mockUserService.EXPECT().GetUsers().Return(userModels, pages, nil)
 
 	c.sut.GetUsers(c.ctx)
 
-	var output []types.User
+	var output types.Users
 	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
 
 	assert.Nil(t, c.ctx.Errors, "should complete without error")
 	assert.Equal(t, expectedOutput, output, "response body should match")
 	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_GetUsersPage tests retrieving a specific page of users from the blog.
+func TestUserController_GetUsersPage(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+	c.ctx.Request.URL, _ = url.Parse("?page=2")
+
+	title1 := "testTitle1"
+	title2 := "testTitle2"
+	userModels := []repository.User{
+		{
+			UserName: "testAuthor",
+			Posts: []repository.Post{
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle1",
+					Title:     &title1,
+				},
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle2",
+					Title:     &title2,
+				},
+			},
+		},
+	}
+
+	pages := 1
+	expectedOutput := types.Users{
+		Users: &[]types.User{
+			{
+				UserID: userModels[0].UserName,
+				Posts: &[]types.PostMetadata{
+					{
+						Id:     userModels[0].Posts[0].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title1,
+					},
+					{
+						Id:     userModels[0].Posts[1].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title2,
+					},
+				},
+			},
+		},
+		Pages: &pages,
+	}
+
+	c.mockUserService.EXPECT().GetUsersPage(2).Return(userModels, pages, nil)
+
+	c.sut.GetUsers(c.ctx)
+
+	var output types.Users
+	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, expectedOutput, output, "response body should match")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_GetUsersPage_Invalid_Page tests retrieving a specific page of users from the blog with invalid page param.
+func TestUserController_GetUsersPage_Invalid_Page(t *testing.T) {
+	t.Parallel()
+	c := createUserControllerContext(t)
+	c.ctx.Request.URL, _ = url.Parse("?page=wrong_param")
+
+	title1 := "testTitle1"
+	title2 := "testTitle2"
+	userModels := []repository.User{
+		{
+			UserName: "testAuthor",
+			Posts: []repository.Post{
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle1",
+					Title:     &title1,
+				},
+				{
+					Author:    repository.User{UserName: "testAuthor"},
+					URLHandle: "urlHandle2",
+					Title:     &title2,
+				},
+			},
+		},
+	}
+
+	pages := 1
+	expectedOutput := types.Users{
+		Users: &[]types.User{
+			{
+				UserID: userModels[0].UserName,
+				Posts: &[]types.PostMetadata{
+					{
+						Id:     userModels[0].Posts[0].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title1,
+					},
+					{
+						Id:     userModels[0].Posts[1].URLHandle,
+						Author: userModels[0].UserName,
+						Title:  title2,
+					},
+				},
+			},
+		},
+		Pages: &pages,
+	}
+
+	c.mockUserService.EXPECT().GetUsers().Return(userModels, pages, nil)
+
+	c.sut.GetUsers(c.ctx)
+
+	var output types.Users
+	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
+
+	assert.Nil(t, c.ctx.Errors, "should complete without error")
+	assert.Equal(t, expectedOutput, output, "response body should match")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
+// TestUserController_GetUsersPage_Negative_Page tests retrieving a specific page of users from the blog with a negative page param.
+func TestUserController_GetUsersPage_Negative_Page(t *testing.T) {
+	t.Parallel()
+
+	c := createUserControllerContext(t)
+	c.ctx.Request.URL, _ = url.Parse("?page=-1")
+
+	expectedError := errortypes.InvalidUserPageError{Page: -1}
+
+	c.mockUserService.EXPECT().GetUsersPage(-1).Return(nil, -1, expectedError)
+
+	c.sut.GetUsers(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
 }
 
 // TestUserController_GetUsers_Unexpected_Error tests handling an unexpected error while retrieving users from the blog.
@@ -311,7 +456,7 @@ func TestUserController_GetUsers_Unexpected_Error(t *testing.T) {
 	c := createUserControllerContext(t)
 
 	expectedError := errortypes.UnexpectedUserError{}
-	c.mockUserService.EXPECT().GetUsers().Return(nil, fmt.Errorf("unexpected error"))
+	c.mockUserService.EXPECT().GetUsers().Return(nil, -1, fmt.Errorf("unexpected error"))
 
 	c.sut.GetUsers(c.ctx)
 

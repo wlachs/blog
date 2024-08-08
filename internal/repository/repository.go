@@ -15,6 +15,8 @@ type Repository interface {
 	Preload(column string, conditions ...interface{}) *gorm.DB
 	Close() error
 	AutoMigrate(value interface{}) error
+	Count(count *int64) *gorm.DB
+	Model(value interface{}) *gorm.DB
 }
 
 // repository implements the Repository interface and stores the concrete Gorm DB implementation
@@ -72,4 +74,12 @@ func (rep *repository) Close() error {
 // AutoMigrate updates the DB schema to match the current state
 func (rep *repository) AutoMigrate(value interface{}) error {
 	return rep.db.AutoMigrate(value)
+}
+
+func (rep *repository) Count(count *int64) *gorm.DB {
+	return rep.db.Count(count)
+}
+
+func (rep *repository) Model(value interface{}) *gorm.DB {
+	return rep.db.Model(value)
 }

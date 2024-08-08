@@ -7,6 +7,7 @@ import (
 	"github.com/wlachs/blog/internal/container"
 	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/repository"
+	"math"
 	"os"
 )
 
@@ -15,7 +16,8 @@ type UserService interface {
 	AuthenticateUser(userID string, password string) (string, error)
 	CheckUserPassword(userID string, password string) bool
 	GetUser(userID string) (repository.User, error)
-	GetUsers() ([]repository.User, error)
+	GetUsers() ([]repository.User, int, error)
+	GetUsersPage(page int) ([]repository.User, int, error)
 	RegisterFirstUser() error
 	RegisterUser(userID string, password string) (repository.User, error)
 	UpdateUser(userID string, oldPassword string, newPassword string) (repository.User, error)
@@ -26,6 +28,9 @@ type UserService interface {
 type userService struct {
 	cont container.Container
 }
+
+// userPageSize sets the pagination page size
+const userPageSize = 5
 
 // CreateUserService instantiates the userService using the application container.
 func CreateUserService(cont container.Container) UserService {
@@ -83,10 +88,26 @@ func (u userService) GetUser(userID string) (repository.User, error) {
 	return userRepository.GetUser(userID)
 }
 
-// GetUsers retrieves every user and maps them to a slice of user data objects.
-func (u userService) GetUsers() ([]repository.User, error) {
+// GetUsers retrieves the first page of users and maps them to a slice of user data objects.
+func (u userService) GetUsers() ([]repository.User, int, error) {
+	return u.GetUsersPage(1)
+}
+
+// GetUsersPage retrieves a specific page of users and maps them to a slice of user data objects.
+// The second return parameter contains the number of pages used for pagination.
+func (u userService) GetUsersPage(page int) ([]repository.User, int, error) {
+	log := u.cont.GetLogger()
 	userRepository := u.cont.GetUserRepository()
-	return userRepository.GetUsers()
+
+	if page < 1 {
+		log.Errorf("invalid user page number %d", page)
+		return nil, -1, errortypes.InvalidUserPageError{Page: page}
+	}
+
+	users, count, err := userRepository.GetUsers(page, userPageSize)
+	pages := int(math.Ceil(float64(count) / float64(userPageSize)))
+
+	return users, pages, err
 }
 
 // RegisterFirstUser creates the main user if it doesn't exist yet.

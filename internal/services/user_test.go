@@ -200,7 +200,7 @@ func TestUserService_GetUser_Unexpected_Error(t *testing.T) {
 	assert.Equal(t, repository.User{}, user, "response doesn't match expected user data")
 }
 
-// TestUserService_GetUsers tests getting every user of the blog.
+// TestUserService_GetUsers tests getting the first page of users of the blog.
 func TestUserService_GetUsers(t *testing.T) {
 	c := createUserServiceContext(t)
 
@@ -223,24 +223,67 @@ func TestUserService_GetUsers(t *testing.T) {
 		},
 	}
 
-	c.mockUserRepository.EXPECT().GetUsers().Return(userModels, nil)
+	c.mockUserRepository.EXPECT().GetUsers(1, 5).Return(userModels, 5, nil)
 
-	users, err := c.sut.GetUsers()
+	users, pages, err := c.sut.GetUsers()
 
 	assert.Nil(t, err, "expected to complete without error")
 	assert.Equal(t, userModels, users, "response doesn't match expected user data")
+	assert.Equal(t, 1, pages, "incorrect page count")
 }
 
 // TestUserService_GetUsers_Unexpected_Error tests handling an unexpected error while getting every user of the blog.
 func TestUserService_GetUsers_Unexpected_Error(t *testing.T) {
 	c := createUserServiceContext(t)
 
-	c.mockUserRepository.EXPECT().GetUsers().Return([]repository.User{}, fmt.Errorf("internal error"))
+	c.mockUserRepository.EXPECT().GetUsers(1, 5).Return([]repository.User{}, -1, fmt.Errorf("internal error"))
 
-	users, err := c.sut.GetUsers()
+	users, _, err := c.sut.GetUsers()
 
 	assert.NotNil(t, err, "expected to receive an error")
 	assert.Equal(t, []repository.User{}, users, "response doesn't match expected user data")
+}
+
+// TestUserService_GetUsersPage tests getting a specific page of users of the blog.
+func TestUserService_GetUsersPage(t *testing.T) {
+	c := createUserServiceContext(t)
+
+	userModels := []repository.User{
+		{
+			ID:           0,
+			UserName:     "testAuthor1",
+			PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
+			Posts: []repository.Post{{
+				URLHandle: "handle1",
+			}},
+		},
+		{
+			ID:           1,
+			UserName:     "testAuthor2",
+			PasswordHash: "$2y$10$Hb7smnjLlPtN.VMyNi5dYuMaCmEgCbus/Tapxf2u5jhxkKE1Pr50.",
+			Posts: []repository.Post{{
+				URLHandle: "handle2",
+			}},
+		},
+	}
+
+	c.mockUserRepository.EXPECT().GetUsers(2, 5).Return(userModels, 6, nil)
+
+	users, pages, err := c.sut.GetUsersPage(2)
+
+	assert.Nil(t, err, "expected to complete without error")
+	assert.Equal(t, userModels, users, "response doesn't match expected user data")
+	assert.Equal(t, 2, pages, "incorrect page count")
+}
+
+// TestUserService_GetUsersPage_Invalid_Page tests getting a specific page of users of the blog with a negative page number.
+func TestUserService_GetUsersPage_Invalid_Page(t *testing.T) {
+	c := createUserServiceContext(t)
+
+	expectedError := errortypes.InvalidUserPageError{Page: -2}
+	_, _, err := c.sut.GetUsersPage(-2)
+
+	assert.Equal(t, expectedError, err, "error doesn't match expected one")
 }
 
 // TestUserService_RegisterFirstUser tests registering the first user.

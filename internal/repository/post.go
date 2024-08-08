@@ -29,7 +29,7 @@ type PostRepository interface {
 	UpdatePost(post Post) (Post, error)
 	DeletePost(urlHandle string) error
 	GetPost(urlHandle string) (Post, error)
-	GetPosts() ([]Post, error)
+	GetPosts(pageIndex int, pageSize int) ([]Post, int, error)
 }
 
 // postRepository is the concrete implementation of the PostRepository interface.
@@ -140,17 +140,27 @@ func (p postRepository) GetPost(urlHandle string) (Post, error) {
 	return post, nil
 }
 
-// GetPosts retrieves every post from the database.
-func (p postRepository) GetPosts() ([]Post, error) {
+// GetPosts retrieves a specific page of posts from the database.
+func (p postRepository) GetPosts(pageIndex int, pageSize int) ([]Post, int, error) {
 	log := p.logger
 	repo := p.repository
 
 	var posts []Post
-	if result := repo.Preload("Author").Order("created_at DESC").Find(&posts); result.Error != nil {
+	result := repo.
+		Preload("Author").
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset((pageIndex - 1) * pageSize).
+		Find(&posts)
+
+	if result.Error != nil {
 		log.Debugf("error fetching posts: %v", result.Error)
-		return []Post{}, result.Error
+		return []Post{}, -1, result.Error
 	}
 
-	log.Debugf("fetched posts: %v", posts)
-	return posts, nil
+	var count int64
+	repo.Model(&Post{}).Count(&count)
+
+	log.Debugf("fetched posts: %v, item count %d", posts, count)
+	return posts, int(count), nil
 }

@@ -28,3 +28,11 @@ type PostNotFoundError struct {
 func (e PostNotFoundError) Error() string {
 	return fmt.Sprintf("post with URL handle \"%s\" not found", e.URLHandle)
 }
+
+type InvalidPostPageError struct {
+	Page int
+}
+
+func (e InvalidPostPageError) Error() string {
+	return fmt.Sprintf("post page with number %d not valid", e.Page)
+}

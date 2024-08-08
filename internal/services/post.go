@@ -4,7 +4,9 @@ package services
 
 import (
 	"github.com/wlachs/blog/internal/container"
+	"github.com/wlachs/blog/internal/errortypes"
 	"github.com/wlachs/blog/internal/repository"
+	"math"
 )
 
 // PostService interface. Defines post-related business logic.
@@ -13,13 +15,17 @@ type PostService interface {
 	UpdatePost(updatedPost repository.Post) (repository.Post, error)
 	DeletePost(id string) error
 	GetPost(id string) (repository.Post, error)
-	GetPosts() ([]repository.Post, error)
+	GetPosts() ([]repository.Post, int, error)
+	GetPostsPage(page int) ([]repository.Post, int, error)
 }
 
 // postService is the concrete implementation of the PostService interface.
 type postService struct {
 	cont container.Container
 }
+
+// postPageSize sets the pagination page size
+const postPageSize = 5
 
 // CreatePostService instantiates the postService using the application container.
 func CreatePostService(cont container.Container) PostService {
@@ -69,8 +75,23 @@ func (p postService) GetPost(urlHandle string) (repository.Post, error) {
 	return postRepository.GetPost(urlHandle)
 }
 
-// GetPosts retrieves every post of the blog.
-func (p postService) GetPosts() ([]repository.Post, error) {
+// GetPosts retrieves the first page of posts of the blog.
+func (p postService) GetPosts() ([]repository.Post, int, error) {
+	return p.GetPostsPage(1)
+}
+
+// GetPostsPage retrieves one page of posts of the blog.
+func (p postService) GetPostsPage(page int) ([]repository.Post, int, error) {
+	log := p.cont.GetLogger()
 	postRepository := p.cont.GetPostRepository()
-	return postRepository.GetPosts()
+
+	if page < 1 {
+		log.Errorf("invalid post page number %d", page)
+		return nil, -1, errortypes.InvalidPostPageError{Page: page}
+	}
+
+	posts, count, err := postRepository.GetPosts(page, postPageSize)
+	pages := int(math.Ceil(float64(count) / float64(postPageSize)))
+
+	return posts, pages, err
 }

@@ -163,10 +163,11 @@ func TestUserRepository_GetUsers(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	userQuery := regexp.QuoteMeta("SELECT * FROM `users`")
+	userQuery := regexp.QuoteMeta("SELECT * FROM `users` ORDER BY user_name ASC LIMIT ? OFFSET ?")
 	postQuery := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`author_id` IN (?,?)")
 
 	c.mockDb.ExpectQuery(userQuery).
+		WithArgs(3, 3).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "user_name"}).
 			AddRow(1, "testUser").
 			AddRow(2, "otherTestUser"))
@@ -176,7 +177,7 @@ func TestUserRepository_GetUsers(t *testing.T) {
 			AddRow(1, "test_1", 1).
 			AddRow(2, "test_2", 2))
 
-	posts, err := c.sut.GetUsers()
+	posts, _, err := c.sut.GetUsers(2, 3)
 
 	assert.Nil(t, err, "should complete without error")
 	assert.Equal(t, 2, len(posts), "didn't receive the expected number of users")
@@ -192,7 +193,7 @@ func TestUserRepository_GetUsers_Unexpected_Error(t *testing.T) {
 
 	c.mockDb.ExpectQuery(query).WillReturnError(expectedError)
 
-	posts, err := c.sut.GetUsers()
+	posts, _, err := c.sut.GetUsers(1, 1)
 
 	assert.Equal(t, expectedError, err, "error should match expected value")
 	assert.Equal(t, 0, len(posts), "shouldn't receive any users")

@@ -8,7 +8,7 @@ info:
   license:
     name: MIT
     url: https://github.com/wlachs/blog/blob/main/LICENSE
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: https://laszloborbely.com/api/v0
 tags:
@@ -26,15 +26,17 @@ paths:
       summary: Get all posts
       description: Find and retrieve every post in the blog in chronologically reversed order
       operationId: getPosts
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            format: int32
+            default: 1
       responses:
         200:
-          description: Successfully retrieved the posts
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Post'
+          $ref: '#/components/responses/Posts'
   /posts/{PostID}:
     parameters:
       - $ref: '#/components/parameters/PostID'
@@ -117,15 +119,17 @@ paths:
       summary: Get all users
       description: Retrieves every user of the blog
       operationId: getUsers
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            format: int32
+            default: 1
       responses:
         200:
-          description: Successfully retrieved users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+          $ref: '#/components/responses/Users'
   /users/{UserID}:
     parameters:
       - $ref: '#/components/parameters/UserID'
@@ -370,6 +374,33 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdatedPost'
+  responses:
+    Posts:
+      description: Paginated post query response object.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              posts:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostMetadata'
+              pages:
+                type: integer
+    Users:
+      description: Paginated user query response object.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              users:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+              pages:
+                type: integer
   securitySchemes:
     X-Auth-Token:
       type: apiKey
