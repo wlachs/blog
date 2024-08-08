@@ -28,7 +28,7 @@ paths:
       operationId: getPosts
       parameters:
         - name: page
-          in: path
+          in: query
           description: Page number
           schema:
             type: integer
@@ -127,7 +127,7 @@ paths:
       operationId: getUsers
       parameters:
         - name: page
-          in: path
+          in: query
           description: Page number
           schema:
             type: integer
