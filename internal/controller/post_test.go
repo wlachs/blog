@@ -536,6 +536,51 @@ func TestPostController_GetPostsPage(t *testing.T) {
 	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
 }
 
+// TestPostController_GetPosts_Invalid_Page tests retrieving a specific page of posts from the blog with invalid page param.
+func TestPostController_GetPosts_Invalid_Page(t *testing.T) {
+	t.Parallel()
+
+	c := createPostControllerContext(t)
+	c.ctx.Request.URL, _ = url.Parse("?page=wrong_param")
+
+	urlHandle := "testUrlHandle"
+	title := "testTitle"
+	summary := "testSummary"
+
+	userModel := repository.User{
+		UserName: "testAuthor",
+	}
+
+	postModels := []repository.Post{
+		{
+			URLHandle: urlHandle,
+			Author:    userModel,
+			Title:     &title,
+			Summary:   &summary,
+		},
+	}
+
+	expectedOutput := []types.PostMetadata{
+		{
+			Id:      urlHandle,
+			Title:   title,
+			Author:  userModel.UserName,
+			Summary: &summary,
+		},
+	}
+
+	c.mockPostService.EXPECT().GetPosts().Return(postModels, nil)
+
+	c.sut.GetPosts(c.ctx)
+
+	var output []types.PostMetadata
+	_ = json.Unmarshal(c.rec.Body.Bytes(), &output)
+
+	assert.Nil(t, c.ctx.Errors, "expected no errors")
+	assert.Equal(t, expectedOutput, output, "incorrect output body")
+	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
+}
+
 // TestPostController_GetPost_Unexpected_Error tests handling an unexpected error while retrieving a single post from the blog.
 func TestPostController_GetPosts_Unexpected_Error(t *testing.T) {
 	t.Parallel()
