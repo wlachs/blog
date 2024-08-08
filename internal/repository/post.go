@@ -146,7 +146,14 @@ func (p postRepository) GetPosts(pageIndex int, pageSize int) ([]Post, error) {
 	repo := p.repository
 
 	var posts []Post
-	if result := repo.Preload("Author").Order("created_at DESC").Find(&posts); result.Error != nil {
+	result := repo.
+		Preload("Author").
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset((pageIndex - 1) * pageSize).
+		Find(&posts)
+
+	if result.Error != nil {
 		log.Debugf("error fetching posts: %v", result.Error)
 		return []Post{}, result.Error
 	}
