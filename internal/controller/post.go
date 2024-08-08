@@ -8,6 +8,7 @@ import (
 	"github.com/wlachs/blog/internal/repository"
 	"github.com/wlachs/blog/internal/services"
 	"net/http"
+	"strconv"
 )
 
 // PostController interface defining post-related middleware methods to handle HTTP requests
@@ -139,8 +140,18 @@ func (controller postController) GetPost(c *gin.Context) {
 // GetPosts middleware. Top level handler of /posts GET requests.
 func (controller postController) GetPosts(c *gin.Context) {
 	postService := controller.postService
+	page := c.Query("page")
+	pageId, err := strconv.Atoi(page)
 
-	posts, err := postService.GetPosts()
+	var posts []repository.Post
+
+	// If no page query is provided, call the default service
+	if err != nil {
+		posts, err = postService.GetPosts()
+	} else {
+		posts, err = postService.GetPostsPage(pageId)
+	}
+
 	if err != nil {
 		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{})
 		return

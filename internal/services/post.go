@@ -14,6 +14,7 @@ type PostService interface {
 	DeletePost(id string) error
 	GetPost(id string) (repository.Post, error)
 	GetPosts() ([]repository.Post, error)
+	GetPostsPage(page int) ([]repository.Post, error)
 }
 
 // postService is the concrete implementation of the PostService interface.
@@ -69,8 +70,13 @@ func (p postService) GetPost(urlHandle string) (repository.Post, error) {
 	return postRepository.GetPost(urlHandle)
 }
 
-// GetPosts retrieves every post of the blog.
+// GetPosts retrieves the first page of posts of the blog.
 func (p postService) GetPosts() ([]repository.Post, error) {
+	return p.GetPostsPage(1)
+}
+
+// GetPostsPage retrieves one page of posts of the blog.
+func (p postService) GetPostsPage(page int) ([]repository.Post, error) {
 	postRepository := p.cont.GetPostRepository()
 	return postRepository.GetPosts()
 }

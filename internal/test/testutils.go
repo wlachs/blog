@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 )
 
 // CreateControllerContext creates a Context for mocking HTTP requests.
@@ -14,6 +15,7 @@ func CreateControllerContext() (*gin.Context, *httptest.ResponseRecorder) {
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = &http.Request{Header: make(http.Header)}
+	ctx.Request.URL, _ = url.Parse("/")
 	return ctx, recorder
 }
 
