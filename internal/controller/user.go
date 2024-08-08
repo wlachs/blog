@@ -128,17 +128,19 @@ func (u userController) GetUsers(c *gin.Context) {
 	pageId, err := strconv.Atoi(page)
 
 	var users []repository.User
+	var pages int
 
 	// If no page query is provided, call the default service
 	if err != nil {
-		users, err = userService.GetUsers()
+		users, pages, err = userService.GetUsers()
 	} else {
-		users, err = userService.GetUsersPage(pageId)
+		users, pages, err = userService.GetUsersPage(pageId)
 	}
 
 	switch err.(type) {
 	case nil:
-		c.IndentedJSON(http.StatusOK, populateUsers(users))
+		us := populateUsers(users)
+		c.IndentedJSON(http.StatusOK, types.Users{Users: &us, Pages: &pages})
 	case errortypes.InvalidUserPageError:
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 	default:

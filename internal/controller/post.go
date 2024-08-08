@@ -144,17 +144,19 @@ func (controller postController) GetPosts(c *gin.Context) {
 	pageId, err := strconv.Atoi(page)
 
 	var posts []repository.Post
+	var pages int
 
 	// If no page query is provided, call the default service
 	if err != nil {
-		posts, err = postService.GetPosts()
+		posts, pages, err = postService.GetPosts()
 	} else {
-		posts, err = postService.GetPostsPage(pageId)
+		posts, pages, err = postService.GetPostsPage(pageId)
 	}
 
 	switch err.(type) {
 	case nil:
-		c.IndentedJSON(http.StatusOK, populatePostMetadataSlice(posts))
+		p := populatePostMetadataSlice(posts)
+		c.IndentedJSON(http.StatusOK, types.Posts{Posts: &p, Pages: &pages})
 	case errortypes.InvalidPostPageError:
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 	default:

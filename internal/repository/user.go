@@ -25,7 +25,7 @@ type UserRepository interface {
 	UpdateUser(user User) (User, error)
 	DeleteUser(userName string) error
 	GetUser(userName string) (User, error)
-	GetUsers(pageIndex int, pageSize int) ([]User, error)
+	GetUsers(pageIndex int, pageSize int) ([]User, int, error)
 }
 
 // userRepository is the concrete implementation of the UserRepository interface
@@ -138,7 +138,8 @@ func (u userRepository) GetUser(userName string) (User, error) {
 }
 
 // GetUsers retrieves a specific page of users from the database.
-func (u userRepository) GetUsers(pageIndex int, pageSize int) ([]User, error) {
+// The second return parameter holds the overall item count.
+func (u userRepository) GetUsers(pageIndex int, pageSize int) ([]User, int, error) {
 	log := u.logger
 	repo := u.repository
 
@@ -151,13 +152,16 @@ func (u userRepository) GetUsers(pageIndex int, pageSize int) ([]User, error) {
 
 	if result.Error != nil {
 		log.Debugf("failed to retrieve users: %v", result.Error)
-		return []User{}, result.Error
+		return []User{}, -1, result.Error
 	}
+
+	var count int64
+	repo.Model(&User{}).Count(&count)
 
 	populateUsersAsAuthorsOfPosts(users)
 
-	log.Debugf("retrieved users: %v", users)
-	return users, nil
+	log.Debugf("retrieved users: %v, item count %d", users, count)
+	return users, int(count), nil
 }
 
 // populateUserAsAuthorOfPosts manually sets user model for contained posts
