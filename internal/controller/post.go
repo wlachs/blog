@@ -152,12 +152,14 @@ func (controller postController) GetPosts(c *gin.Context) {
 		posts, err = postService.GetPostsPage(pageId)
 	}
 
-	if err != nil {
+	switch err.(type) {
+	case nil:
+		c.IndentedJSON(http.StatusOK, populatePostMetadataSlice(posts))
+	case errortypes.InvalidPostPageError:
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+	default:
 		_ = c.AbortWithError(http.StatusInternalServerError, errortypes.UnexpectedPostError{})
-		return
 	}
-
-	c.IndentedJSON(http.StatusOK, populatePostMetadataSlice(posts))
 }
 
 // populatePost maps a repository.Post model to types.Post

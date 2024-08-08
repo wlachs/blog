@@ -581,6 +581,25 @@ func TestPostController_GetPosts_Invalid_Page(t *testing.T) {
 	assert.Equal(t, 200, c.rec.Code, "incorrect response status")
 }
 
+// TestPostController_GetPosts_Negative_Page tests retrieving a specific page of posts from the blog with a negative page param.
+func TestPostController_GetPosts_Negative_Page(t *testing.T) {
+	t.Parallel()
+
+	c := createPostControllerContext(t)
+	c.ctx.Request.URL, _ = url.Parse("?page=-1")
+
+	expectedError := errortypes.InvalidPostPageError{Page: -1}
+
+	c.mockPostService.EXPECT().GetPostsPage(-1).Return(nil, expectedError)
+
+	c.sut.GetPosts(c.ctx)
+
+	errors := c.ctx.Errors.Errors()
+	assert.Equal(t, 1, len(errors), "expected exactly 1 error")
+	assert.Equal(t, expectedError.Error(), errors[0], "incorrect error type")
+	assert.Equal(t, 400, c.rec.Code, "incorrect response status")
+}
+
 // TestPostController_GetPost_Unexpected_Error tests handling an unexpected error while retrieving a single post from the blog.
 func TestPostController_GetPosts_Unexpected_Error(t *testing.T) {
 	t.Parallel()
