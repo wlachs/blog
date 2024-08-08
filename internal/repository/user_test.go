@@ -163,7 +163,7 @@ func TestUserRepository_GetUsers(t *testing.T) {
 	t.Parallel()
 	c := createUserRepositoryContext(t)
 
-	userQuery := regexp.QuoteMeta("SELECT * FROM `users`")
+	userQuery := regexp.QuoteMeta("SELECT * FROM `users` ORDER BY user_name ASC LIMIT ? OFFSET ?")
 	postQuery := regexp.QuoteMeta("SELECT * FROM `posts` WHERE `posts`.`author_id` IN (?,?)")
 
 	c.mockDb.ExpectQuery(userQuery).

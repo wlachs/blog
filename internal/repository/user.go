@@ -144,6 +144,7 @@ func (u userRepository) GetUsers(pageIndex int, pageSize int) ([]User, error) {
 
 	var users []User
 	result := repo.Preload("Posts").
+		Order("user_name ASC").
 		Limit(pageSize).
 		Offset((pageIndex - 1) * pageSize).
 		Find(&users)
